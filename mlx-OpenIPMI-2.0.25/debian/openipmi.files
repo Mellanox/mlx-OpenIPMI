@@ -1,0 +1,10 @@
+lib/systemd/system/*
+var/ipmi_sim/mellanox/sdr.30.main
+etc/ipmi/*
+usr/bin/*
+usr/share/info/OpenIPMI.inf*
+usr/share/man/man1/*.1
+usr/share/man/man5/*.5
+usr/share/man/man7/ipmi_cmdlang.7
+usr/share/man/man7/openipmi_conparms.7
+usr/share/man/man8/ipmilan.8

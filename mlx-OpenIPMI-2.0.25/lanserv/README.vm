@@ -1,0 +1,128 @@
+The ipmi_sim command can be used as an IPMI simulator for a virtual
+machine.  The virtual machine talks to the simulator over a TCP
+socket, and the simulator can control the virtual machine aspects that
+it needs to be able to control.
+
+A Quick Start
+-------------
+
+This section describes a quick start for getting running using the
+OpenIPMI simulator with qemu-kvm.  This assume you have qemu-kvm
+patched with the IPMI patches, or they have been included.
+
+You will need:
+  OpenIPMI-2.0.21-rc1 or later
+  A qemu bootable disk with Linux (or something else that can use IPMI)
+	installed on it.
+  qemu-kvm compiled with the proper IPMI patches
+
+First, configure OpenIPMI to install someplace.  We will assume this
+is $HOME/x3.  Do this with:
+
+./configure --prefix=$HOME/x3/usr --sysconfdir=$HOME/x3/etc \
+	    --with-perlinstall=$HOME/x3/usr/lib/perl \
+	    --with-pythoninstall=$HOME/x3/usr/lib/python
+
+then "make", then "make install".  Note that I also had to add
+
+--with-tclcflags="-I/usr/include/tcl8.5" --with-tcllibs="-ltcl8.5"
+
+to the configure line for the gui to work because the TCL
+configuration was screwed up on my machine.
+
+Then edit $HOME/x3/etc/ipmi/lan.conf and find the "startcmd" variable.
+Edit that for your configuration of qemu.  You need to leave the -ipmi
+option as is, of course.
+
+Run $HOME/x3/usr/bin/ipmi_sim.  This will start the simulator and it
+will also automatically start ("Power on") the VM.  You can telnet to
+port 9003 to get a console to the VM.
+
+In the OpenIPMI build directory, type "make rungui".  This will run
+the OpenIPMI GUI.  Pull down "File" and select "OpenDomain".  In the
+dialog that comes up, enter "test" for the Domain name, "localhost"
+for the Address, "9001" for the Port, "ipmiusr" for the Username, and
+"test" for the Password.  Then select "Ok".  (Note that the username
+and password are configured in the lan.conf file that gets installed
+in $HOME/x3/etc/ipmi.)
+
+You should have "test" in the list of domains.  Open it up, then open
+"Entities", then "test(23.1 system_chassis)", then "Controls".  You
+will see a power and reset control.  Right click on those; you can set
+them to "0" or "1" to perform the obvious functions.  You will see
+that the VM is already powered on as it was started when ipmi_sim
+started up.
+
+If you log in to the VM, you can do a "modprobe ipmi_si" and "modprobe
+ipmi_devintf" and talk to the simulated BMC from there.  A full
+watchdog is also simulated, so you can do a "modprobe ipmi_watchdog"
+and get a watchdog timer running.
+
+If you have the watchdog loaded, go to the OpenIPMI GUI window and
+right click on the "test" entry (the topmost one).  Choose "Display
+SELS".  Then in the target login, do "echo 1 >/dev/watchdog".  In
+about 10 seconds, the VM will reset and you will see the reset log in
+the IPMI SEL display window.
+
+
+The VM Interface
+----------------
+
+The VM interface is a much simplified interface similar to the direct
+mode IPMI serial codec.
+
+The framing is done with special characters.  A 0xa0 character says
+that all characters since the last framing character (or beginning of
+the session) is an IPMI message.  A 0xa1 character says that the
+preceding characters are a control command.
+
+A 0xaa character says to change bit 4 of the next character from a '1'
+to a '0'.  This way, a 0xa0 data character is sent as 0xaa 0xb0.
+
+An IPMI message has the following format:
+
+  seq
+  netfn << 2 | lun
+  cmd
+  data...
+  checksum
+  0xa0
+
+The sequence is a one-byte sequence number, it will be returned in the
+response.  The response is the same as above, except a completion code
+is added after the cmd byte.  This is much like the KCS interface with
+a sequence number at the beginning.
+
+Commands are pretty simple.  The first byte of a command is the command
+id.  The rest is data for the command.
+
+There are two commands sent from the VM to the simulator.  Command 0x08
+is followed by a single byte with the following bits telling the simulator
+the capabilities of the VM.  These bits are:
+
+  bit 0 - can do a power off.
+  bit 1 - can do a target reset.
+  bit 2 - can enable/disable the IPMI interrupt.
+  bit 3 - can generate an NMI.
+  bit 4 - can set the ATTN bit on the interface.
+
+A reset command is sent from the VM to the simulator to say that a
+reset has occurred.
+
+The commands from the simulator to the VM are based on the above
+capabilities.  The simulator will not send a command where the VM does
+not have the capability.  None of these have any data with them.  The
+commands are:
+
+  0xFF - The next byte is the version of the protocol, currently 1
+  0x00 - Clear ATTN
+  0x01 - Set ATTN without an interrupt
+  0x02 - Set ATTN with an interrupt
+  0x03 - Power off (shut down) the VM
+  0x04 - Reset the target in the VM
+  0x05 - Enable the IPMI messaging interrupt
+  0x06 - Disable the IPMI messaging interrupt
+  0x07 - Send an NMI from the BMC.
+
+
+That's pretty much it.  The idea was to keep it simple.

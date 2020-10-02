@@ -1,0 +1,331 @@
+
+1) Questions about the driver
+
+  1.1) I'm trying to do a send message command, but it fails.  Why
+       can't I do this?
+
+     You know too much about IPMI :-).  OpenIPMI does all this work
+     for you.  To send a message out on IPMB, you set up an IPMB
+     address and send the message to that address (without all that
+     nasty send message stuff).  It's much easier.  Try it, you'll
+     like it.
+
+  1.2) I *really* want to do a send message command.  How do I do it?
+
+     Sorry, you can't.  It's not that I have it out for you, it has to
+     do with the technical details of IPMI.  If you have multiple
+     users of an IPMI system, you have to have a central mechanism to
+     manage information.  You have sequence numbers that have to be
+     assigned and managed; if the same applications used the same
+     sequence numbers then chaos would ensue.  Since the OpenIPMI
+     driver allows multiple users (and has users both inside and
+     outside the kernel) it can't allow users to directly do send
+     message commands.
+
+
+2) Questions about the library.
+
+  2.1) Why is ipmi_ui so ugly?
+
+     Well, ipmi_ui is a test program that I wrote for my own purposes.
+     I'll try to clean it up in the future and make it into something
+     useful, and it's certainly ugly, but it's primarily for my
+     testing.
+
+     In general, it has been replace with the ipmish command, which
+     provides a much more consistent interface to the system.  It is
+     much more consistent and is well documented.  It is perhaps not
+     quite as nice for interactive use.
+
+
+  2.2) What if I just want to send some IPMI commands.
+
+     Then "ipmicmd" is the tools for you.  It can connect to a system
+     interface or to a LAN connection and let you directly enter
+     commands.
+
+
+  2.3) I'm trying to write a little program that comes up and queries a
+     few things.  Can I use the OpenIPMI library to do that?
+
+     Yes, you can.  In the ipmi_open_domain() command, you can turn on
+     and off the things you want, so you can trim down the startup
+     process to speed it up.
+
+
+  2.4) Why can't I just perform an operation and immediately get the
+     results?  Why all these callbacks?
+
+     Read the documenation for details.  The OpenHPI interface
+     (http://openhpi.sourceforce.net) is expected to sit on top of the
+     OpenIPMI library and provide an interface more like that.  Plus,
+     you can write your own wrappers to do it.  It's not possible to
+     write event-driven wrappers on top of a non-event-driven
+     interface.
+
+
+  2.5) Can I have multiple OpenIPMI session from different programs to
+     the same interface?
+
+     Certainly.  I do it all the time :-)
+
+     The main problem is the System Event Log (SEL).  Somebody has to
+     delete items from the SEL.  You have a couple of options...
+
+     If you don't care about the SEL, then set the SEL rescan time to
+     zero with ipmi_domain_set_sel_rescan_time() or disable it with
+     the startup options.  This will turn off the SEL completely.
+
+     If you do care about SELs on multiple programs, you will have to
+     develop a protocol between all the users.  You have to have a way
+     to let all the listeners get all the SELs, but still delete items
+     from the SEL in a timely manner.  I recommend that you set the
+     SEL rescan time to a value, and for every event receive wait
+     double that value before deleting it.  OpenIPMI will correctly
+     handle multiple things deleting items from the SEL.
+
+
+  2.6) Can you open more than one IPMI session from OpenIPMI?
+
+     Certainly.  You can create as many connections and domains as you
+     like, the library has no limitiation.
+
+
+  2.7) I have an xyz computer, does OpenIPMI support it?
+
+     That depends on a lot of things.  Does the box have IPMI?  Most
+     systems do not, it's currently mostly on high-end system.  If the
+     system does have IPMI, OpenIPMI will probably support it.  It may
+     not support the full function of your system though.  Output
+     devices are not defined by the IPMI spec, so they are all OEM and
+     require custom code to control them.  Sensors that do not appear
+     in an SDR repository will not be supported without custom code.
+     Any things custom to the system will probably not be supported.
+
+
+  2.8) What interfaces does OpenIPMI support?
+
+     OpenIPMI currently supports system interfaces through the
+     OpenIPMI device driver and LAN interfaces.  It does not support
+     serial interfaces or any type of callback devices.
+
+
+  2.9) Does OpenIPMI support ICMB?
+
+     Not currently, although it shouldn't be hard to add.
+
+
+ 2.10) How do I learn more about IPMI?
+
+     Not much information currently exists.  The OpenIPMI web site has
+     a pointer to the specs and the documentation that comes with
+     IPMI, but the spec is very hard to read and the documentation is
+     really more marketing level.  The documentation that comes with
+     OpenIPMI provides a more gentle introduction to IPMI (you should
+     certainly read it before you read the spec) but it's more focused
+     on OpenIPMI, not IPMI proper.
+
+     Someone needs to write a book (and it's not going to be me).
+
+
+ 2.11) What does OpenIPMI do?
+
+     OpenIPMI attempts to handle a lot of the difficult parts of IPMI
+     for the user; as much as it can without making too many policy
+     decisions for the user.  For instance, it:
+     * Fetches all the SDRs and translates them into sensors and
+       entity information.
+     * Manages access to the SEL.
+     * Handles the interface, which is especially hard for LAN
+       connections.
+     * Handles fetching FRU information for entities.
+     * Lets you deal directly with sensors and entities.
+     * Periodically scans all the information it manages to see if
+       it has changed.
+     * Decodes incoming events, correlates them with sensors,
+       translates raw values into useful values, and delivers them
+       with the sensor object.
+     * Allows OEM code to plug in to fix up things and present
+       non-standard devices through standard interfaces.
+     Basically, the user just has to start up the connection and wait
+     for things to happen.  As OpenIPMI finds things, it will report
+     them and the user can take action.  It is designed to remove the
+     low-level details from the user's concern and only present the
+     things the user is really interested in handling.
+
+
+ 2.12) I don't like the way OpenIPMI does x.
+
+     You may disagree with implementation decisions I have made and
+     that's fine.  You can make suggestions, submit patches, and work
+     with me on this.  Or you may write your own IPMI library.  Or you
+     may pillage OpenIPMI to get what you want.  Like Linus holds
+     final say on what goes into his distribution of Linux, I hold
+     final say on what goes into my distribution of OpenIPMI.  But
+     that doesn't mean you can't do your own work on it.
+
+
+ 2.13) Why did you write OpenIPMI?
+
+     OpenIPMI was originally written to support a customer who needed
+     an interface for their IPMI platform.  It was also designed with
+     HPI in mind, for something to implement as the base to an HPI
+     library.
+
+
+ 2.14) I just want to use pieces of OpenIPMI, can I?
+
+     Well, it's open source.  But unfortunately, OpenIPMI is not
+     terribly modular as a whole.  Certain parts (the interface code,
+     for instance) can be used stand-alone.  But SDRs, MC, SELs,
+     domains, sensors, etc. all know about each other.  It's somewhat
+     inescapable, really, the concepts are intertwined.  It would be
+     fairly easy to take any individual piece of the code (the sdr.c
+     code, for instance) and change it to work in a different system,
+     but you would have to change the code to do that.
+
+
+ 2.15) Why is the OpenIPMI interface the way it is (bad, good, ugly,
+     elegent, simple, obtuse, etc)?
+
+     My basic philosophy of API design is:
+
+     1) Users should only have to deal with the objects they really
+        care about.  You should distill the interface down to what the
+        user really cares about.  Think about it from the user's point
+        of view and implement what they want.
+
+     2) Users (especially me) have a hard time dealing with large
+        numbers of types.  Distill the types down to the essentials.
+        Don't overload types with information that doesn't belong in
+        them, either.  Essentials are essentials; don't go beyond
+        them, though.
+
+     3) Interfaces should be designed with extensibility in mind.  All
+        types should be opaque pointers so that the internal
+        representation and implementation can change without the
+        binary or logical interface changing.  If you make an
+        exception on this, it better be for a really good reason.
+
+     4) Use the basic types of the language as much as possible.  It's
+        better to have more functions than types.
+
+     I'm very picky about this.  I have seen too many bad APIs; ones
+     based on the implementation, not the needs of the user.
+
+
+ 2.16) My IPMI system has some broken information in it.  Can I fix it
+     in OpenIPMI?
+
+     Sure.  You can write OEM code that ties in to when objects are
+     added to the system and fix them up as necessary.  The details
+     of this are beyond the scope of the FAQ, but you can look in
+     lib/oem_*.c for examples.
+
+
+ 2.17) It takes a long time to find all the information about a system
+     on IPMB.  What's the deal?
+
+     Unfortunately, the base library can't really know what exists or
+     where it should exist, so it has to scan everything on the bus.
+     You can write an OEM plugin or scan the addresses you are
+     interested in by hand.
+
+     If you don't care about the information, as of version 1.4.4 you
+     can skip those steps via options to the ipmi_open_domain()
+     function or the startup parms to ipmish or the Perl interface.
+
+
+ 2.18) I want to know when OpenIPMI is done finding everything in the
+     system.
+
+     Unfortunately, there is no concept of "done" in IPMI.  IPMI
+     allows a dynamic environment with elements of the system coming
+     and going.  You need to re-think your philosophy here and design
+     software that can dynamically manage elements of the system
+     coming and going.  OpenIPMI will tell you when it finds things,
+     and then you can manage them.
+
+     But bowing to popular demand, though, the 1.4 version of OpenIPMI
+     adds a "done" callback to the ipmi_open_domain function that lets
+     you know when OpenIPMI has finished the first pass of everything
+     (SDRs, SELs, FRUs, IPMB scan).  There is no guarantee that it
+     found everything in the first pass, and you should handle
+     dynamically adding things later.
+
+
+ 2.19) How do I build the Perl interface?
+
+     The Perl interface uses swig 1.3.22 or later, which is available
+     from http://www.swig.org.  That must be installed and in your
+     path to build the Perl interface.  You must also have the
+     development libraries for Perl installed, of course.
+
+
+ 2.20) How do I catch SNMP traps with OpenIPMI?
+
+     Although OpenIPMI has infrastructure to handle traps, it does not
+     catch them for you.  You have to provide the software to catch
+     the traps and then you can tell OpenIPMI about them.  The
+     ui/basic_ui.c code has some example SNMP trap code using the
+     netsmp and ucsdsnmp libraries.
+
+ 2.21) Why does it take a long time to get events from OpenIPMI?
+
+    The standard interface to the event log is polled, and the polling
+    time is 5 seconds by default.  You can change the polling time if
+    you don't care about the additional load.
+
+    A system interface (SMI) does have an immediate event receive
+    capability; when an event comes in it goes into the system log and
+    into a queue.  OpenIPMI does nt enable tis by default, you must
+    enable it yourself with a "Set BMC Global Enables Command".
+
+    LAN interfaces may be capable of sending SNMP traps when an event
+    comes in.  This is through the Platform Event Traps and is fairly
+    complicated.  OpenIPMI provides a way to configure this more
+    easily, but you still have to know what you are doing.  See
+    question 2.20 for how to handle these traps.
+
+ 2.22) What crypto does OpenIPMI implement/use?
+
+    OpenIPMI implements MD2 and MD5.  It's questionable whether those
+    are crypto algorithms or not, but I'm including them just to be
+    sure.
+
+    For the IPMI 2.0 RMCP+ algorithms, OpenIPMI requires the OpenSSL
+    package.  OpenIPMI will work without OpenSSL, but then it will not
+    be able to use the advanced encryption algorithms.  The algorithms
+    used by OpenIPMI are: HMAC-SHA1 (96 bit) and HMAC-MD5 (128 bit) for
+    authentication and integrity.  AES-CBC (128 bit) is the only option
+    for encryption. In the future, RC4 (40 bit and 128 bit) may be
+    implemented per the spec.
+
+    The OpenIPMI authentication/encryption framework is pluggable and
+    users could write their own algorithms if they wish.
+
+2.23) How do I interpret the OpenIPMI numeric error values?
+
+    Nothing should really be printing these values except for logs and
+    tracing.  However, a lot of these come out from sample
+    applications.  However, I'll go over a little to make tracing and the
+    like easier.
+
+    The top 8 bits of an error are the error type (basically where the
+    error came from).  The rest of the value is the error itself; make
+    sure to use the proper IPMI_xxx_ERR_VAL() to extract it.  The
+    error types are:
+
+    * 00 - An OS error or an error from OpenIPMI itself.  These are
+           standard errno values and can be decoded with strerror()
+           and friends.
+    * 01 - An error from the remote management controller (An IPMI error).
+           You can look these up in the IPMI manual.
+    * 02 - RMCP+ error.  These are in the IPMI LAN section of the IPMI
+           manual.
+    * 03 - SoL (Serial Over LAN) errors.  These are in the SoL section
+           of the IPMI manual.
+
+    You can convert any of these errors to a human-readable (currently
+    English only) string using ipmi_err_get_string().  See
+    include/OpenIPMI/ipmi_err.h for more details on these things.

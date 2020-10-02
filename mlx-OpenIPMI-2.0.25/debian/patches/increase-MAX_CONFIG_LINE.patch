@@ -1,0 +1,20 @@
+Description: Increase MAX_CONFIG_LINE
+ The parser of OpenIPMI's ipmi_sim is limited in the size of the command
+ line that we can pass to a VM. This fixes the issue, and probably at
+ other places where OpenIPMI is using the parser.
+Author: Thomas Goirand <zigo@debian.org>
+Bug-Debian: https://bugs.debian.org/923873
+Forwarded: no
+Last-Update: 2019-03-27
+
+--- openipmi-2.0.25.orig/lanserv/OpenIPMI/serv.h
++++ openipmi-2.0.25/lanserv/OpenIPMI/serv.h
+@@ -474,7 +474,7 @@ int chan_init(channel_t *chan);
+ void sysinfo_init(sys_data_t *sys);
+ 
+ 
+-#define MAX_CONFIG_LINE 1024
++#define MAX_CONFIG_LINE 10240
+ 
+ const char *mystrtok(char *str, const char *delim, char **next);
+ 

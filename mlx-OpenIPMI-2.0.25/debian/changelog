@@ -1,0 +1,240 @@
+openipmi (2.0.25-2.2) unstable; urgency=medium
+
+  * Mellanox specific patch file to support the IPMB interface and
+    BlueField sensors and FRUs.
+
+ -- Asmaa Mnebhi <asmaa@mellanox.com>  Thu, 28 Mar 2020 22:57:19 +0100
+
+openipmi (2.0.25-2.1) unstable; urgency=medium
+
+  * Non-maintainer upload, with pre-approval from current maintainer.
+  * Increase MAX_CONFIG_LINE from 1024 to 10240, patching
+    lanserv/OpenIPMI/serv.h, which makes it possible to have long enough
+    command line when using ipmi_sim (Closes: #923873).
+
+ -- Thomas Goirand <zigo@debian.org>  Wed, 27 Mar 2019 22:57:19 +0100
+
+openipmi (2.0.25-2) unstable; urgency=medium
+
+  * Fixed openipmi init file for other archs. Thanks Majon!
+    closes: Bug#875537
+  * debian/copyright change to dep5 format
+
+ -- Noël Köthe <noel@debian.org>  Sat, 19 May 2018 11:04:51 +0200
+
+openipmi (2.0.25-1) unstable; urgency=medium
+
+  * new upstream release from 2018-04-16
+  * remove upstream included
+    patches/0001-Add-openssl-1.1.0-support.patch
+  * debian/openipmi.init fix lsb headers. Thanks Nishanth
+    closes: Bug#829037
+  * openipmi: fix upstream bugs and stop using legacy paths
+    Thanks Nishanth again;) closes: Bug#829028
+  * move pkg-config files to a multiarch location. Thanks Helmut
+    closes: Bug#852739
+  * debian/control updated Homepage: which isn't available via https
+  * debian/watch fixed/updated to get it working again
+
+ -- Noël Köthe <noel@debian.org>  Fri, 18 May 2018 13:44:36 +0200
+
+openipmi (2.0.22-1.1) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * Add OpenSSL 1.1.0 support (Closes: #828469).
+
+ -- Sebastian Andrzej Siewior <sebastian@breakpoint.cc>  Wed, 14 Dec 2016 22:19:50 +0100
+
+openipmi (2.0.22-1) unstable; urgency=medium
+
+  * new upstream release from 2016-06-01
+    - removed configure patch (included in this version)
+  * ACK NMUs. Thanks Christoph. closes: #818004, #819105
+  * debian/control updated Standards-Version, no changes needed
+  * debian/control change libopenipmi0 Section to libs from override
+  * debian/watch updated
+  * debian/control fixed lintian warnings/information:
+    binary-control-field-duplicates-source, debhelper-but-no-misc-depends,
+  * debian/rules fixed lintian warning debian-rules-missing-recommended-target
+
+ -- Noël Köthe <noel@debian.org>  Sun, 03 Jul 2016 19:04:46 +0200
+
+openipmi (2.0.21-1.2) unstable; urgency=medium
+
+  * Re-add accidentally deleted debian/*.files. Sorry! Closes: #819105
+
+ -- Christoph Berg <myon@debian.org>  Thu, 24 Mar 2016 17:55:19 +0100
+
+openipmi (2.0.21-1.1) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * Fix substitution of OPENIPMI_VERSION_ variables in configure.ac.
+    Closes: #818004
+
+ -- Christoph Berg <myon@debian.org>  Mon, 21 Mar 2016 18:40:41 +0100
+
+openipmi (2.0.21-1) unstable; urgency=medium
+
+  * new upstream release from 2014-01-28
+    - ACK NMUs. Thanks for your help! closes: #764041, #569015, #474087, #632523
+  * debian/control updates homepage to https
+  * added init script. Thanks for the script. closes: #539416, #614394
+  * enabled openssl. closes: #775847
+  * debian/rules added hardening flags
+
+ -- Noël Köthe <noel@debian.org>  Thu, 25 Feb 2016 12:06:21 +0100
+
+openipmi (2.0.16-1.4) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * Fix config.sub/guess updating to fix FTBFS on arm64
+     + Make update non-conditional so if there is a problem it fails rather
+       than being silently ignored.
+     + Add autotools-dev to build-depends so that updates can happen on
+       autobuilders with minimal environments (Closes: #764041)
+     + Rearrange things so that updated config.sub and config.guess are not
+       included in .diff.gz to reduce diff noise.
+
+ -- Peter Michael Green <plugwash@debian.org>  Sat, 11 Oct 2014 13:39:18 +0000
+
+openipmi (2.0.16-1.3) unstable; urgency=low
+
+  * Non-maintainer upload.
+  * Don't ship .la files.
+
+ -- Luk Claes <luk@debian.org>  Sun, 03 Jul 2011 09:48:16 +0200
+
+openipmi (2.0.16-1.2) unstable; urgency=low
+
+  * Non-maintainer upload.
+  * Fix "FTBFS on kfreebsd-*: SIGPWR": re-apply patch from 2.0.14-2/#497902;
+    thanks Petr Salinger (closes: #569015).
+
+ -- gregor herrmann <gregoa@debian.org>  Sat, 17 Jul 2010 19:19:01 +0200
+
+openipmi (2.0.16-1.1) unstable; urgency=low
+
+  * Non-maintainer upload, thanks Simon McVittie for the patch!
+  * Fix pkg-config files: neither pthread.pc nor ncurses.pc exists in Debian
+    (Closes: #474087)
+  * Use chrpath to remove unnecessary rpath from libOpenIPMIposix.so.0.0.1
+  * Remove a generated Makefile during clean to avoid it getting into the
+    Debian diff after repeated builds (as seen in the Ubuntu diff)
+  * Actually compile the package in build-arch rather than waiting until
+    install-arch
+
+ -- Micah Anderson <micah@debian.org>  Sat, 30 Jan 2010 19:17:13 -0500
+
+openipmi (2.0.16-1) unstable; urgency=low
+
+  * new upstream release from 2009-03-16
+  * debian/compat debian/control raised to debhelper 5
+  * debian/control removed URL in description new we
+    have the Homepage: field
+  * debian/control updated Standards-Version: (no changes needed)
+  * debian/rules removed unused cdbd dependency
+
+ -- Noèl Köthe <noel@debian.org>  Tue, 28 Jul 2009 10:17:23 +0200
+
+openipmi (2.0.14-2) unstable; urgency=low
+
+  * added GNU/kFreeBSD patch from Petr. Thanks
+    (closes: Bug#497902)
+
+ -- Noèl Köthe <noel@debian.org>  Sun, 19 Oct 2008 15:58:15 +0200
+
+openipmi (2.0.14-1) unstable; urgency=medium
+
+  * new upstream release
+    (closes: Bug#490165)
+  * debian/control updated Standards-Version
+
+ -- Noèl Köthe <noel@debian.org>  Sat, 19 Jul 2008 20:30:39 +0200
+
+openipmi (2.0.13-1) unstable; urgency=low
+
+  * new upstream release
+  * corrected watch file Thanks to Raphael Geissert
+    (closes: Bug#449859)
+  * updated Standards-Version
+  * added Homepage to debian/control
+
+ -- Noèl Köthe <noel@debian.org>  Mon, 25 Feb 2008 20:07:00 +0100
+
+openipmi (2.0.11-2) unstable; urgency=low
+
+  * correcting build dependency libsnmp10-dev -> libsnmp-dev
+    (closes: Bug#444089)
+  * debian/control corrected libopenipmi-dev dependency
+  * debian/rules don't ignore make clean errors
+
+ -- Noèl Köthe <noel@debian.org>  Mon, 01 Oct 2007 17:42:07 +0200
+
+openipmi (2.0.11-1) unstable; urgency=low
+
+  * new upstream release from 2007-02-25
+    (closes: Bug#392788)
+  * added patch parts from Philipp Matthias Hahn <pmhahn@debian.org>
+    Thank you!
+
+ -- Noèl Köthe <noel@debian.org>  Thu, 21 Jun 2007 19:48:32 +0200
+
+openipmi (2.0.7-1) unstable; urgency=low
+
+  * new upstream release from 2006-06-08
+    Thanks to John Wright <john.wright hp.com> for initial work
+    (closes: Bug#380149)
+  * updated Standards Version
+  * new binaries openipmicmd, openipmish, rmcp_ping
+
+ -- Noèl Köthe <noel@debian.org>  Fri, 15 Sep 2006 17:56:24 +0200
+
+openipmi (2.0.2-2) unstable; urgency=low
+
+  * added missing libgdbm-dev to libopenipmi-dev
+    (closes: Bug#334623)
+
+ -- Noèl Köthe <noel@debian.org>  Thu, 20 Oct 2005 23:01:55 +0200
+
+openipmi (2.0.2-1) unstable; urgency=low
+
+  * new upstream release from 2005-07-14
+  * changed build-dep to libsnmp9-dev
+  * corrected stuppid typo
+    (closes: Bug#329928)
+
+ -- Noèl Köthe <noel@debian.org>  Tue, 11 Oct 2005 18:35:21 +0200
+
+openipmi (2.0.1-1) unstable; urgency=low
+
+  * going to 2.x upstream
+  * the gcc 4.0 build problem is fixed by upstream in this version
+    (closes: Bug#304580)
+  * updated Standards-Version
+  * removed debmake build-dep
+    (closes: Bug#305889)
+
+ -- Noèl Köthe <noel@debian.org>  Mon, 04 Jul 2005 21:29:17 +0200
+
+openipmi (1.4.14-1) unstable; urgency=low
+
+  * 1.4.x packages
+  * added homepages to description
+  * added watch file
+
+ -- Noèl Köthe <noel@debian.org>  Tue, 12 Apr 2005 20:55:02 +0200
+
+openipmi (1.3.11-2) unstable; urgency=low
+
+  * corrected build-deps
+    (closes: Bug#278193)
+
+ -- Noèl Köthe <noel@debian.org>  Mon, 01 Nov 2004 13:31:13 +0100
+
+openipmi (1.3.11-1) unstable; urgency=low
+
+  * Initial Release with some help from Philipp Matthias Hahn
+    <pmhahn debian.org> unofficial package
+    (closes: Bug#274721)
+
+ -- Noèl Köthe <noel@debian.org>  Tue, 12 Oct 2004 18:39:24 +0200

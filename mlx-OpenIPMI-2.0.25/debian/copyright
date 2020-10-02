@@ -1,0 +1,18 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: openipmi
+Upstream-Contact: Corey Minyard <cminyard@mvista.com>
+Source: https://sf.net/projects/openipmi/
+
+Files: *
+Copyright: 2004- MontaVista Software Inc., Corey Minyard <cminyard@mvista.com>
+License: LGPL
+ On Debian systems, the full text of the LGPL License can be found in the file
+ `/usr/share/common-licenses/LGPL'.
+
+Files: debian/*
+Copyright: 2004-2018 Noël Köthe <noel@debian.org>
+License: GPL-2+
+ On Debian systems, the full text of the GNU General Public
+ License version 2 can be found in the file
+ `/usr/share/common-licenses/GPL-2'.
+
