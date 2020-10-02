@@ -44,14 +44,13 @@ Vendor: Mellanox Technologies
 
 %description
 This package contains shared library implementation of IPMI and the
-basic tools used with OpenIPMI. It has been patched to add IPMB support.
+basic tools used with OpenIPMI. It supports Mellanox specific BlueField sensors
+and FRUs as well as the IPMB protocol.
 
 
 %prep
 %setup -q
 
-
-%patch0 -p1
 
 %build
 autoreconf -fi
