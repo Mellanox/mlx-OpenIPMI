@@ -1,0 +1,27 @@
+
+DIA_FILES = BusSystem.dia       ManagementController.dia  SimpleHotSwap.dia \
+	    ComplexHotSwap.dia  MgmtIF.dia                Thresh.dia \
+	    Hyst.dia            ServerSystem.dia	  SimpleMonitoring.dia
+
+EXTRA_DIST = IPMI.ltx IPMI.pdf ipmi.bib ${DIA_FILES}
+
+EPS_FILES = BusSystem.eps       ManagementController.eps  SimpleHotSwap.eps \
+	    ComplexHotSwap.eps  MgmtIF.eps                Thresh.eps \
+	    Hyst.eps            ServerSystem.eps	  SimpleMonitoring.eps
+
+IPMI.pdf: IPMI.dvi
+	$(DVIPDF) IPMI
+
+LATEX_IPMI = ${LATEX} "\newcommand{\topdir}{$(top_srcdir)}" "\input{$(srcdir)/IPMI.ltx}"
+IPMI.dvi: $(srcdir)/IPMI.ltx ${EPS_FILES}
+	${LATEX_IPMI}
+	BIBINPUTS=$(srcdir) ${BIBTEX} IPMI
+	${LATEX_IPMI}
+	${LATEX_IPMI}
+
+.dia.eps:
+	$(DIA) --export=$@ $(DIA_FILTER_NAME)=eps $<
+
+CLEANFILES = ${EPS_FILES} \
+	IPMI.aux IPMI.bbl IPMI.blg IPMI.dvi IPMI.log IPMI.pdf IPMI.toc \
+	texput.log

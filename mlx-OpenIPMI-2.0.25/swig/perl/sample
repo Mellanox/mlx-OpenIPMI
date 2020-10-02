@@ -1,0 +1,1143 @@
+#!/usr/bin/perl
+
+# sample
+#
+# A sample file that uses most of the perl/OpenIPMI interface
+#
+# Author: MontaVista Software, Inc.
+#         Corey Minyard <minyard@mvista.com>
+#         source@mvista.com
+#
+# Copyright 2004 MontaVista Software Inc.
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU Lesser General Public License
+#  as published by the Free Software Foundation; either version 2 of
+#  the License, or (at your option) any later version.
+#
+#
+#  THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
+#  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+#  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+#  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+#  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+#  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+#  OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+#  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+#  TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+#  USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+#  You should have received a copy of the GNU Lesser General Public
+#  License along with this program; if not, write to the Free
+#  Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+#
+
+use OpenIPMI;
+
+{
+    package MC_Nameget;
+    sub new {
+	my $a = shift;
+	my $b = \$a;
+	return bless $b;
+    }
+
+    sub mc_cb {
+	my $self = shift;
+	my $mc = shift;
+
+	$$self = $mc->get_name();
+    }
+
+    package Handlers;
+
+    
+    @threshold_list = ("ln", "lc", "lr", "un", "uc", "ur");
+    @low_high = ("l", "h");
+    @act_deact = ("a", "d");
+
+    sub new {
+	my $a = shift;
+	my $b = \$a;
+	return bless $b;
+    }
+
+
+    sub event_cb {
+	my $self = shift;
+	my $domain = shift;
+	my $event = shift;
+	my $mcid;
+	my $name;
+	my $val;
+	my @data;
+	my $dataref;
+
+	$mcid = $event->get_mc_id();
+
+	$name = MC_Nameget::new("");
+	$mcid->to_mc($name);
+	$dataref = $event->get_data();
+	@data = @$dataref;
+
+	print "Got event: $$name ", $event->get_record_id(),
+	      " ", $event->get_type(), " ", $event->get_timestamp(), "\n";
+	print "  Data: ";
+	while (defined ($val = shift @data)) {
+	    printf " %2.2x", $val;
+	}
+	print "\n";
+    }
+
+    sub entity_presence_cb {
+	my $self = shift;
+	my $entity = shift;
+	my $present = shift;
+	my $event = shift;
+
+	print "Entity ", $entity->get_name(), " presence is $present\n";
+
+	if (defined $event) {
+	    $self->event_cb($entity->get_domain(), $event);
+	}
+    }
+
+    sub threshold_event_cb {
+	my $self = shift;
+	my $sensor = shift;
+	my $event_spec = shift;
+	my $raw_set = shift;
+	my $raw = shift;
+	my $value_set = shift;
+	my $value = shift;
+	my $event = shift;
+	my $entity = $sensor->get_entity();
+
+	print "Sensor ", $sensor->get_name(), " got event $event_spec\n";
+	if ($raw_set) {
+	    print "  raw value = $raw\n";
+	}
+	if ($value_set) {
+	    print "  value = $value\n";
+	}
+	if (defined $event) {
+	    $self->event_cb($entity->get_domain(), $event);
+	}
+    }
+
+    sub discrete_event_cb {
+	my $self = shift;
+	my $sensor = shift;
+	my $event_spec = shift;
+	my $severity = shift;
+	my $old_severity = shift;
+	my $event = shift;
+	my $entity = $sensor->get_entity();
+
+	print "Sensor ", $sensor->get_name(), " got event $event_spec\n";
+	print "  severity = $severity, was = $old_severity\n";
+	if (defined $event) {
+	    $self->event_cb($entity->get_domain(), $event);
+	}
+    }
+
+    sub entity_sensor_update_cb {
+	my $self = shift;
+	my $op = shift;
+	my $entity = shift;
+	my $sensor = shift;
+	my $val;
+	my $i;
+	my $rv;
+
+	print $op, " sensor ", $sensor->get_name(), "\n";
+	if (($op eq "added") || ($op eq "changed")) {
+	    print "  lun = ", $sensor->get_lun(), "\n";
+	    print "  num = ", $sensor->get_num(), "\n";
+	    print "  sensor_type_string = ",
+		   $sensor->get_sensor_type_string(), "\n";
+	    print "  sensor_type = ", $sensor->get_sensor_type(), "\n";
+	    print "  event_reading_type_string = ",
+		   $sensor->get_event_reading_type_string(), "\n";
+	    print "  event_reading_type = ",
+		   $sensor->get_event_reading_type(), "\n";
+	    print "  entity_id = ", $sensor->get_entity_id(), "\n";
+	    print "  entity_instance = ", $sensor->get_entity_instance(), "\n";
+	    print "  sensor_init_scanning = ",
+		   $sensor->get_sensor_init_scanning(), "\n";
+	    print "  sensor_init_events = ",
+		   $sensor->get_sensor_init_events(), "\n";
+	    print "  sensor_init_thresholds = ",
+		   $sensor->get_sensor_init_thresholds(), "\n";
+	    print "  sensor_init_hysteresis = ",
+		   $sensor->get_sensor_init_hysteresis(), "\n";
+	    print "  sensor_init_type = ",
+		   $sensor->get_sensor_init_type(), "\n";
+	    print "  sensor_init_pu_events = ",
+		   $sensor->get_sensor_init_pu_events(), "\n";
+	    print "  sensor_init_pu_scanning = ",
+		   $sensor->get_sensor_init_pu_scanning(), "\n";
+	    print "  ignore_if_no_entity = ",
+		   $sensor->get_ignore_if_no_entity(), "\n";
+	    print "  supports_auto_rearm = ",
+		   $sensor->get_supports_auto_rearm(), "\n";
+	    print "  event_support = ", $sensor->get_event_support(), "\n";
+	    print "  sensor_direction = ",
+		  $sensor->get_sensor_direction(), "\n";
+	    print "  oem1 = ", $sensor->get_oem1(), "\n";
+	    print "  sensor_id = ", $sensor->get_sensor_id(), "\n";
+
+	    if ($sensor->get_event_reading_type()
+		== $OpenIPMI::EVENT_READING_TYPE_THRESHOLD)
+	    {
+		print "  rate_unit_string = ",
+		       $sensor->get_rate_unit_string(), "\n";
+		print "  rate_unit = ", $sensor->get_rate_unit(), "\n";
+		print "  base_unit_string = ",
+		       $sensor->get_base_unit_string(), "\n";
+		print "  base_unit = ", $sensor->get_base_unit(), "\n";
+		print "  modifier_unit_string = ",
+		       $sensor->get_modifier_unit_string(), "\n";
+		print "  modifier_unit = ", $sensor->get_modifier_unit(), "\n";
+		print "  modifier_unit_use = ",
+		       $sensor->get_modifier_unit_use(), "\n";
+		print "  percentage = ", $sensor->get_percentage(), "\n";
+		print "  threshold_access = ",
+		       $sensor->get_threshold_access(), "\n";
+		print "  hysteresis_support = ",
+		       $sensor->get_hysteresis_support(), "\n";
+
+		if ($sensor->get_normal_min_specified()) {
+		    $rv = $sensor->get_normal_min(\$val);
+		    if ($rv) {
+			print "***Error getting normal min: $rv\n";
+		    } else {
+			print "  normal_min = $val\n";
+		    }
+		}
+		if ($sensor->get_normal_max_specified()) {
+		    $rv = $sensor->get_normal_max(\$val);
+		    if ($rv) {
+			print "***Error getting normal max: $rv\n";
+		    } else {
+			print "  normal_max = $val\n";
+		    }
+		}
+		if ($sensor->get_nominal_reading_specified()) {
+		    $rv = $sensor->get_nominal_reading(\$val);
+		    if ($rv) {
+			print "***Error getting nominal reading: $rv\n";
+		    } else {
+			print "  nominal_reading = $val\n";
+		    }
+		}
+		$rv = $sensor->get_sensor_max(\$val);
+		if ($rv) {
+		    print "***Error getting sensor max: $rv\n";
+		} else {
+		    print "  sensor_max = $val\n";
+		}
+		$rv = $sensor->get_sensor_min(\$val);
+		if ($rv) {
+		    print "***Error getting sensor min: $rv\n";
+		} else {
+		    print "  sensor_min = $val\n";
+		}
+
+		$rv = $sensor->get_tolerance(128, \$val);
+		if (! $rv) {
+		    print "  tolerance at 128 is $val\n";
+		}
+		$rv = $sensor->get_accuracy(128, \$val);
+		if (! $rv) {
+		    print "  accuracy at 128 is $val\n";
+		}
+
+		for $i (@threshold_list) {
+		    my $supported = 0;
+		    my $settable = 0;
+		    my $readable = 0;
+		    my $j;
+		    my $k;
+
+		    $rv = $sensor->threshold_reading_supported($i,
+							       \$supported);
+		    if ($rv) {
+			print "***Error getting supported for threshold $i:",
+			      $rv, "\n";
+		    }
+
+		    if (! $supported) {
+			next;
+		    }
+
+		    print "  Threshold '$i' supported:";
+
+		    $rv = $sensor->threshold_settable($i, \$settable);
+		    if ($rv) {
+			print "***Error getting settable for threshold $i:",
+			      $rv, "\n";
+		    }
+		    if ($settable) {
+			print " settable";
+		    }
+
+		    $rv = $sensor->threshold_readable($i, \$readable);
+		    if ($rv) {
+			print "***Error getting readable for threshold $i:",
+			      $rv, "\n";
+		    }
+		    if ($readable) {
+			print " readable";
+		    }
+		    print "\n";
+
+		    print "    Supports events:";
+		    for $j (@low_high) {
+			for $k (@act_deact) {
+			    my $e = $i . $j . $k;
+			    my $s = 0;
+			    $rv = $sensor->threshold_event_supported($e, \$s);
+			    if ($rv) {
+				print "***Error getting ev support for event ",
+				      "$e: $rv\n";
+			    } elsif ($s) {
+				print " $e";
+			    }
+			}
+		    }
+		    print "\n";
+		}
+	    } else {
+		for $i (0 .. 14) {
+		    my $a_supported = 0;
+		    my $d_supported = 0;
+		    my $readable = 0;
+		    my $j;
+		    my $str;
+
+		    $rv = $sensor->discrete_event_readable($i, \$readable);
+		    if ($rv) {
+			print "***Error getting readable for offset $i:",
+			      $rv, "\n";
+		    }
+
+		    $rv = $sensor->discrete_event_supported($i . "a",
+							    \$a_supported);
+		    if ($rv) {
+			print "***Error getting a supported for offset $i:",
+			      $rv, "\n";
+		    }
+
+		    $rv = $sensor->discrete_event_supported($i . "d",
+							    \$d_supported);
+		    if ($rv) {
+			print "***Error getting d supported for offset $i:",
+			      $rv, "\n";
+		    }
+
+		    if ($readable || $a_supported || $d_supported) {
+			$str = $sensor->reading_name_string($i);
+			print "  Offset $i ($str) supported:";
+
+			if ($readable) {
+			    print " readable";
+			}
+			if ($a_supported) {
+			    print " assert";
+			}
+			if ($d_supported) {
+			    print " deassert";
+			}
+			print "\n";
+		    }
+		}
+	    }
+	    
+	    if ($op eq "added") {
+		$rv = $sensor->add_event_handler($self);
+		if ($rv) {
+		    print "***Unable to add event handler: $rv\n";
+		}
+	    }
+	} elsif ($op eq "deleted") {
+	    $rv = $sensor->remove_event_handler($self);
+	    if ($rv) {
+		print "***Unable to remove event handler: $rv\n";
+	    }
+	}
+    }
+
+    sub control_get_val_cb {
+	my $self = shift;
+	my $control = shift;
+	my $err = shift;
+	my $val;
+
+	print "Control ", $control->get_name(), " err = $err, values = ";
+	while (defined ($val = shift @data)) {
+	    print " $val";
+	}
+	print "\n";
+    }
+
+    sub control_get_light_cb {
+	my $self = shift;
+	my $control = shift;
+	my $err = shift;
+	my $val = shift;
+
+	print "Control ", $control->get_name(), " err = $err, light value = ",
+	      $val, "\n";
+    }
+
+    sub control_get_id_cb {
+	my $self = shift;
+	my $control = shift;
+	my $err = shift;
+	my $val;
+
+	print "Control ", $control->get_name(), " err = $err, id value = ";
+	while (defined ($val = shift @data)) {
+	    printf " %2.2x", $val;
+	}
+	print "\n";
+    }
+
+    sub control_event_val_cb {
+	my $self = shift;
+	my $control = shift;
+	my $event = shift;
+	my $num = $control->get_num_vals();
+	my $i;
+	my @valids = ();
+	my @vals = ();
+
+	print "Control ", $control->get_name(), " event, values = ";
+	for $i (0 .. $num-1) {
+	    push @valids, shift;
+	}
+	for $i (0 .. $num-1) {
+	    push @vals, shift;
+	}
+	for $i (0 .. $num-1) {
+	    print " (", shift @valids, " ", shift @vals, ")";
+	}
+	print "\n";
+    }
+
+    sub entity_control_update_cb {
+	my $self = shift;
+	my $op = shift;
+	my $entity = shift;
+	my $control = shift;
+	my $use_setting = 0;
+	my $rv;
+	my $num_vals;
+	my ($i, $j, $k);
+
+	print $op, " control ", $control->get_name(), "\n";
+	if (($op eq "added") || ($op eq "changed")) {
+	    my $type;
+
+	    $type = $control->get_type();
+	    print "  type = ", $type, "\n";
+	    print "  entity_id = ", $control->get_entity_id(), "\n";
+	    print "  entity_instance = ",
+		  $control->get_entity_instance(), "\n";
+	    print "  settable = ", $control->is_settable(), "\n";
+	    print "  readable = ", $control->is_readable(), "\n";
+	    print "  ignore_if_no_entity = ",
+		  $control->get_ignore_if_no_entity(), "\n";
+	    print "  control_id = ", $control->get_control_id(), "\n";
+	    print "  has_events = ", $control->has_events(), "\n";
+	    $num_vals = $control->get_num_vals();
+	    print "  num_vals = ", $num_vals, "\n";
+
+	    if ($type == $OpenIPMI::CONTROL_LIGHT) {
+		$use_setting = $control->light_set_with_setting();
+	    }
+
+	    if ($use_setting) {
+		print "  light controlled with setting\n";
+		print "  Colors: ";
+		for $i (0 .. $OpenIPMI::CONTROL_NUM_COLORS) {
+		    if ($control->light_is_color_supported($i)) {
+			print " ";
+			print $OpenIPMI::color_string($i), "($i)";
+		    }
+		}
+		print "\n";
+		print "  light_has_local_control = ",
+		      $control->light_has_local_control(), "\n";
+		$rv = $control->ipmi_control_get_light($self);
+		if ($rv) {
+		    print "***Error getting light: $rv\n";
+		}
+	    } elsif ($type == $OpenIPMI::CONTROL_IDENTIFIER) {
+		print "  identifier_get_max_length = ",
+		      $control->identifier_get_max_length(), "\n";
+		$rv = $control->identifier_get_val($self);
+		if ($rv) {
+		    print "***Error getting control id: $rv\n";
+		}
+	    } else {
+		if ($type == $OpenIPMI::CONTROL_LIGHT) {
+		    for $i (0 .. $num_vals-1) {
+			my $n = $control->get_num_light_values($i);
+			print "  Light $i\n";
+			for $j (0 .. $n-1) {
+			    print "    Value $j\n";
+			    my $o= $control->get_num_light_transitions($i, $j);
+			    for $k (0 .. $o-1) {
+				my $v;
+				print "    Transition $k:";
+				$v = $control->get_light_color($i, $j, $k);
+				print " ";
+				print $OpenIPMI::color_string($v);
+				$v = $control->get_light_color_time
+				    ($i, $j, $k);
+				print " time(", $v, ")\n";
+			    }
+			}
+		    }
+		}
+	    }
+
+	    if ($op eq "added") {
+		$rv = $control->add_event_handler($self);
+		if ($rv) {
+		    print "***Error adding control event handler: $rv\n";
+		}
+	    }
+	} elsif ($op eq "deleted") {
+	    $rv = $control->remove_event_handler($self);
+	    if ($rv) {
+		print "***Error removing control event handler: $rv\n";
+	    }
+	}
+    }
+
+    sub print_multirecord {
+	my $node = shift;
+	my $indent = shift;
+	my $rv;
+	my $name;
+	my $type;
+	my $value;
+	my $sub_node;
+	my $i;
+    
+	$i = 0;
+	while (1) {
+	    $rv = $node->get_field($i, \$name, \$type, \$value, \$sub_node);
+	    if ($rv == $OpenIPMI::einval) {
+		return;
+	    }
+	    $i++;
+	    if ($rv) {
+		next;
+	    }
+	    print $indent . "$name, $type, $value\n";
+	    if ($type eq "subnode") {
+		print_multirecord($subnode, $indent . "  ");
+	    }
+	}
+    }
+
+    sub entity_fru_update_werr_cb {
+	my $self = shift;
+	my $op = shift;
+	my $err = shift;
+	my $entity = shift;
+	my $fru = shift;
+	my $rv;
+
+	print $op, " fru for ", $entity->get_name(), "\n";
+	if ($op eq "error") {
+	    print "  error is $err\n";
+	}
+	if (($op eq "added") || ($op eq "changed")) {
+	    my ($i, $j, $k);
+
+	    $i = $fru->str_to_index("internal_use_version");
+	    if ($i == -1) {
+		print "*** FRU string 'internal_use_version' was invalid\n";
+	    } else {
+		print "  internal_use_version index is $i\n";
+	    }
+	    $i = $fru->str_to_index("blah blah");
+	    if ($i != -1) {
+		print "*** FRU string 'blah blah' was valid\n";
+	    } else {
+		print "  invalid fru string properly failed\n";
+	    }
+
+	    $i = 0;
+	    $j = 0;
+	    $k = $j;
+	    $rv = $fru->get($i, \$j);
+	    while ($rv) {
+		my ($name, $type, $value);
+
+		($name, $type, $value) = split / /, $rv, 3;
+		if (defined $value) {
+		    print "  $name, $type, $value\n";
+		}
+		if ($j != $k) {
+		    if ($j == -1) {
+			$i++;
+			$j = 0;
+		    }
+		} else {
+		    $i++;
+		    $j = 0;
+		}
+		$k = $j;
+		$rv = $fru->get($i, \$j);
+	    }
+	    $j = $fru->get_num_multi_records();
+	    print "$j multirecords\n";
+	    for $i (0 .. $j-1) {
+		my $name = "";
+		my $sub_node;
+		$rv = $fru->multi_record_get_root_node(i, \$name, \$sub_node);
+		if ($rv) {
+		    print "Multirecord $i has no decoder\n";
+		    next;
+		}
+		print "Multirecord $i ($name)\n";
+		print_multirecord($sub_node, "  ");
+	    }
+	}
+    }
+
+    sub entity_hot_swap_update_cb {
+	my $self = shift;
+	my $entity = shift;
+	my $old_state = shift;
+	my $new_state = shift;
+	my $event = shift;
+
+	print "Hot swap change for ", $entity->get_name(), " was $old_state",
+	      " now $new_state\n";
+	if (defined $event) {
+	    $self->event_cb($entity->get_domain(), $event);
+	}
+    }
+
+    sub entity_update_cb {
+	my $self = shift;
+	my $op = shift;
+	my $domain = shift;
+	my $entity = shift;
+
+	print $op, " entity ", $entity->get_name(), "\n";
+	if (($op eq "added") || ($op eq "changed")) {
+	    print "  type = ", $entity->get_type(), "\n";
+	    print "  is_fru = ", $entity->is_fru(), "\n";
+	    print "  entity_id = ", $entity->get_entity_id(), "\n";
+	    print "  entity_instance = ", $entity->get_entity_instance(), "\n";
+	    print "  device_channel = ",
+		  $entity->get_entity_device_channel(), "\n";
+	    print "  device_address = ",
+		  $entity->get_entity_device_address(), "\n";
+	    print "  presence_sensor_always_there = ",
+		   $entity->get_presence_sensor_always_there(), "\n";
+	    print "  channel = ", $entity->get_channel(), "\n";
+	    print "  lun = ", $entity->get_lun(), "\n";
+	    print "  oem = ", $entity->get_oem(), "\n";
+	    print "  access_address = ", $entity->get_access_address(), "\n";
+	    print "  private_bus_id = ", $entity->get_private_bus_id(), "\n";
+	    print "  device_type = ", $entity->get_device_type(), "\n";
+	    print "  device_modifier = ", $entity->get_device_modifier(), "\n";
+	    print "  slave_address = ", $entity->get_slave_address(), "\n";
+	    print "  is_logical_fru = ", $entity->get_is_logical_fru(), "\n";
+	    print "  fru_device_id = ", $entity->get_fru_device_id(), "\n";
+	    print "  ACPI_system_power_notify_required = ",
+		  $entity->get_ACPI_system_power_notify_required(), "\n";
+	    print "  ACPI_device_power_notify_required = ",
+		  $entity->get_ACPI_device_power_notify_required(), "\n";
+	    print "  controller_logs_init_agent_errors = ",
+		  $entity->get_controller_logs_init_agent_errors(), "\n";
+	    print "  log_init_agent_errors_accessing = ",
+		  $entity->get_log_init_agent_errors_accessing(), "\n";
+	    print "  global_init = ", $entity->get_global_init(), "\n";
+	    print "  chassis_device = ", $entity->get_chassis_device(), "\n";
+	    print "  bridge = ", $entity->get_bridge(), "\n";
+	    print "  IPMB_event_generator = ",
+		  $entity->get_IPMB_event_generator(), "\n";
+	    print "  IPMB_event_receiver = ",
+		  $entity->get_IPMB_event_receiver(), "\n";
+	    print "  FRU_inventory_device = ",
+		  $entity->get_FRU_inventory_device(), "\n";
+	    print "  SEL_device = ", $entity->get_SEL_device(), "\n";
+	    print "  SDR_repository_device = ",
+		  $entity->get_SDR_repository_device(), "\n";
+	    print "  sensor_device = ", $entity->get_sensor_device(), "\n";
+	    print "  address_span = ", $entity->get_address_span(), "\n";
+	    print "  dlr_id = ", $entity->get_dlr_id(), "\n";
+	    print "  present = ", $entity->is_present(), "\n";
+	    print "  hot_swappable = ", $entity->is_hot_swappable(), "\n";
+	    if ($op eq "added") {
+		$rv = $entity->add_presence_handler($self);
+		if ($rv) {
+		    print "***Unable to add presence handler: $rv\n";
+		}
+		$rv = $entity->add_sensor_update_handler($self);
+		if ($rv) {
+		    print "***Unable to add sensor update handler: $rv\n";
+		}
+		$rv = $entity->add_control_update_handler($self);
+		if ($rv) {
+		    print "***Unable to add control update handler: $rv\n";
+		}
+		$rv = $entity->add_hot_swap_handler($self);
+		if ($rv) {
+		    print "***Unable to add hot-swap handler: $rv\n";
+		}
+		$rv = $entity->add_fru_update_werr_handler($self);
+		if ($rv) {
+		    print "***Unable to add fru handler: $rv\n";
+		}
+	    }
+	} elsif ($op eq "deleted") {
+	    $rv = $entity->remove_presence_handler($self);
+	    if ($rv) {
+		print "***Unable to remove presence handler: $rv\n";
+	    }
+	    $rv = $entity->remove_sensor_update_handler($self);
+	    if ($rv) {
+		print "***Unable to remove sensor update handler: $rv\n";
+	    }
+	    $rv = $entity->remove_control_update_handler($self);
+	    if ($rv) {
+		print "***Unable to remove control update handler: $rv\n";
+	    }
+	    $rv = $entity->remove_hot_swap_handler($self);
+	    if ($rv) {
+		print "***Unable to remove hot-swap handler: $rv\n";
+	    }
+	    $rv = $entity->remove_fru_update_werr_handler($self);
+	    if ($rv) {
+		print "***Unable to add fru handler: $rv\n";
+	    }
+	}
+    }
+
+    sub mc_active_cb {
+	my $self = shift;
+	my $mc = shift;
+	my $active = shift;
+
+	print "MC ", $mc->get_name(), " active set to $active\n";
+    }
+
+    sub mc_events_enable_cb {
+	my $self = shift;
+	my $mc = shift;
+	my $err = shift;
+	my $domain = $mc->get_domain();
+
+	print "Events enabled for ", $mc->get_name(), " err = $err\n";
+	$stop_count--;
+	if ($stop_count == 0) {
+	    $domain->close($main::h);
+	}
+    }
+
+    sub mc_reread_sel_cb {
+	my $self = shift;
+	my $mc = shift;
+	my $err = shift;
+	my $domain = $mc->get_domain();
+
+	print "SEL reread for ", $mc->get_name(), " err = $err\n";
+	$stop_count--;
+	if ($stop_count == 0) {
+	    $domain->close($main::h);
+	}
+    }
+
+    sub mc_reread_sensors_cb {
+	my $self = shift;
+	my $mc = shift;
+	my $err = shift;
+	my $domain = $mc->get_domain();
+
+	print "Sensors reread for ", $mc->get_name(), " err = $err\n";
+	$stop_count--;
+	if ($stop_count == 0) {
+	    $domain->close($main::h);
+	}
+    }
+
+    sub mc_get_sel_time_cb {
+	my $self = shift;
+	my $mc = shift;
+	my $err = shift;
+	my $time = shift;
+	my $domain = $mc->get_domain();
+
+	print "SEL time for ", $mc->get_name(), " is $time, err = $err\n";
+	$stop_count--;
+	if ($stop_count == 0) {
+	    $domain->close($main::h);
+	}
+    }
+
+    sub mc_update_cb {
+	my $self = shift;
+	my $op = shift;
+	my $domain = shift;
+	my $mc = shift;
+	my $rv;
+
+	print $op, " MC ", $mc->get_name(), "\n";
+	if (($op eq "added") || ($op eq "changed")) {
+	    print "  provides_device_sdrs = ",
+		  $mc->provides_device_sdrs(), "\n";
+	    print "  device_available = ", $mc->device_available(), "\n";
+	    print "  chassis_support = ", $mc->chassis_support(), "\n";
+	    print "  bridge_support = ", $mc->bridge_support(), "\n";
+	    print "  ipmb_event_generator_support = ",
+		  $mc->ipmb_event_generator_support(), "\n";
+	    print "  ipmb_event_receiver_support = ",
+		   $mc->ipmb_event_receiver_support(), "\n";
+	    print "  fru_inventory_support = ",
+		  $mc->fru_inventory_support(), "\n";
+	    print "  sel_device_support = ",
+		  $mc->sel_device_support(), "\n";
+	    print "  sdr_repository_support = ",
+		  $mc->sdr_repository_support(), "\n";
+	    print "  sensor_device_support = ",
+		  $mc->sensor_device_support(), "\n";
+	    print "  device_id = ", $mc->device_id(), "\n";
+	    print "  device_revision = ", $mc->device_revision(), "\n";
+	    print "  major_fw_revision = ", $mc->major_fw_revision(), "\n";
+	    print "  minor_fw_revision = ", $mc->minor_fw_revision(), "\n";
+	    print "  major_version = ", $mc->major_version(), "\n";
+	    print "  minor_version = ", $mc->minor_version(), "\n";
+	    print "  manufacturer_id = ", $mc->manufacturer_id(), "\n";
+	    print "  product_id = ", $mc->product_id(), "\n";
+	    print "  aux_fw_revision = ", $mc->aux_fw_revision(), "\n";
+	    print "  is_active = ", $mc->is_active(), "\n";
+	    print "  get_events_enable = ", $mc->get_events_enable(), "\n";
+	    print "  sel_count = ", $mc->sel_count(), "\n";
+	    print "  sel_entries_used = ", $mc->sel_entries_used(), "\n";
+	    print "  sel_get_major_version = ",
+		  $mc->sel_get_major_version(), "\n";
+	    print "  sel_get_minor_version = ",
+		  $mc->sel_get_minor_version(), "\n";
+	    print "  sel_get_num_entries = ",
+		  $mc->sel_get_num_entries(), "\n";
+	    print "  sel_get_free_bytes = ", $mc->sel_get_free_bytes(), "\n";
+	    print "  sel_get_overflow = ", $mc->sel_get_overflow(), "\n";
+	    print "  sel_get_supports_delete_sel = ",
+		  $mc->sel_get_supports_delete_sel(), "\n";
+	    print "  sel_get_supports_partial_add_sel = ",
+		  $mc->sel_get_supports_partial_add_sel(), "\n";
+	    print "  sel_get_supports_reserve_sel = ",
+		  $mc->sel_get_supports_reserve_sel(), "\n";
+	    print "  sel_get_supports_get_sel_allocation = ",
+		  $mc->sel_get_supports_get_sel_allocation(), "\n";
+	    print "  sel_get_last_addition_timestamp = ",
+		  $mc->sel_get_last_addition_timestamp(), "\n";
+	    print "  get_sel_rescan_time = ",
+		  $mc->get_sel_rescan_time(), "\n";
+
+	    $stop_count++;
+	    $stop_count++;
+	    $rv = $mc->set_events_enable(1, $self);
+	    if ($rv) {
+		print "***Error enabling MC events: $rv\n";
+		$stop_count--;
+	    }
+
+	    $stop_count++;
+	    $rv = $mc->reread_sensors($self);
+	    if ($rv) {
+		print "***Error rereading MC sensors: $rv\n";
+		$stop_count--;
+	    }
+
+	    $mc->set_sel_rescan_time(5);
+
+	    $stop_count++;
+	    $rv = $mc->reread_sel($self);
+	    if ($rv) {
+		print "***Error rereading MC SEL: $rv\n";
+		$stop_count--;
+	    }
+
+	    $stop_count++;
+	    $rv = $mc->get_current_sel_time($self);
+	    if ($rv) {
+		print "***Error getting current MC SEL time: $rv\n";
+		$stop_count--;
+	    }
+
+	    # Stop count for this incremented at first.
+	    $rv = $mc->send_command(0, 10, 0x43,
+				    [ 0, 0, 0, 0, 0, 0xff ], $self);
+	    if ($rv) {
+		print "***Unable to send command: $rv\n";
+		$stop_count--;
+	    }
+
+	    if ($op eq "added") {
+		$rv = $mc->add_active_handler($self);
+		if ($rv) {
+		    print "***Unable to add active handler: $rv\n";
+		}
+	    }
+	} elsif ($op eq "deleted") {
+	    $rv = $mc->remove_active_handler($self);
+	    if ($rv) {
+		print "***Unable to remove active handler: $rv\n";
+	    }
+	}
+    }
+
+    sub domain_addr_cmd_cb {
+	my $self = shift;
+	my $domain = shift;
+	my $addr = shift;
+	my $lun = shift;
+	my $netfn = shift;
+	my $cmd = shift;
+	my $val;
+
+	print "Got message from ", $domain->get_name(), "\n";
+	print " addr = $addr\n";
+	print " lun=$lun, netfn=$netfn, cmd=$cmd\n";
+	print " data:";
+	while (defined ($val = shift)) {
+	    printf " %2.2x", $val;
+	}
+	print "\n";
+    }
+
+    sub mc_cmd_cb {
+	my $self = shift;
+	my $mc = shift;
+	my $netfn = shift;
+	my $cmd = shift;
+	my $domain = $mc->get_domain();
+
+	print "Got message from ", $mc->get_name(), "\n";
+	print " netfn=$netfn, cmd=$cmd\n";
+	print " data:";
+	while (defined ($val = shift)) {
+	    printf " %2.2x", $val;
+	}
+	print "\n";
+	$stop_count--;
+	if ($stop_count == 0) {
+	    $domain->close($main::h);
+	}
+    }
+
+    sub conn_change_cb {
+	my $self = shift;
+	my $domain = shift;
+	my $err = shift;
+	my $conn_num = shift;
+	my $port_num = shift;
+	my $still_connected = shift;
+	my $rv;
+	my $i;
+
+	print "Open done ($$self): ", $domain->get_name(), "\n";
+	if ($$self eq "hello") {
+	    $i = new("goodbye");
+	    $rv = $domain->add_connect_change_handler($i);
+	    if ($rv) {
+		print "Unable to add connect change handler: $rv\n";
+	    }
+	    $rv = $domain->remove_connect_change_handler($self);
+	    if ($rv) {
+		print "Unable to remove connect change handler: $rv\n";
+	    }
+
+	    $rv = $domain->add_entity_update_handler($i);
+	    if ($rv) {
+		print "Unable to add entity updated handler: $rv\n";
+	    }
+	    $rv = $domain->add_mc_update_handler($i);
+	    if ($rv) {
+		print "Unable to add mc updated handler: $rv\n";
+	    }
+
+	    $rv = $domain->send_command_addr("smi 15 ", 0, 6, 1, [], $self);
+	    if ($rv) {
+		print "Unable to send command: $rv\n";
+	    }
+
+	    $rv = $domain->add_event_handler($self);
+	    if ($rv) {
+		print "Unable to add event handler: $rv\n";
+	    }
+	} else {
+	    $rv = $domain->send_command_addr("ipmb 0 32", 0, 10, 0x43,
+					     [ 0, 0, 0, 0, 0, 0xff ], $self);
+	    if ($rv) {
+		print "Unable to send command: $rv\n";
+	    }
+	}
+    }
+
+    sub domain_up_cb {
+	my $self = shift;
+	my $domain = shift;
+	my $rv;
+	my $event;
+
+	print "Domain up: ", $domain->get_name(), "\n";
+	print "  type = ", $domain->get_type(), "\n";
+	print "  sel_rescan_type = ", $domain->get_sel_rescan_time(), "\n";
+	print "  ipmb_rescan_type = ", $domain->get_ipmb_rescan_time(), "\n";
+	$domain->set_sel_rescan_time(5);
+	$domain->set_ipmb_rescan_time(20);
+	$domain->iterate_entities($self);
+	$domain->iterate_mcs($self);
+
+	$event = $domain->first_event();
+	while (defined $event) {
+	    $self->event_cb($domain, $event);
+	    $event = $domain->next_event($event);
+	}
+
+	# stop count is incremented at domain startup, don't need another.
+	$stop_count++;
+	$rv = $domain->start_ipmb_mc_scan(0, 0x20, 0x20, $self);
+	if ($rv) {
+	    print "Error starting IPMB scan: $rv\n";
+	    $stop_count--;
+	}
+
+	$rv = $domain->reread_sels($self);
+	if ($rv) {
+	    print "Error starting IPMB scan: $rv\n";
+	    $stop_count--;
+	}
+    }
+
+    sub domain_reread_sels_cb {
+	my $self = shift;
+	my $domain = shift;
+	my $err = shift;
+
+	print "SEL rescan done for ", $domain->get_name(), " err=$err\n";
+	$stop_count--;
+	if ($stop_count == 0) {
+	    $domain->close($main::h);
+	}
+    }
+
+    sub domain_close_done_cb {
+	my $self = shift;
+
+	$$self = "done";
+    }
+
+    sub domain_ipmb_mc_scan_cb {
+	my $self = shift;
+	my $domain = shift;
+	my $err = shift;
+
+	print "IPMB scan done for ", $domain->get_name(), " err=$err\n";
+	$stop_count--;
+	if ($stop_count == 0) {
+	    $domain->close($main::h);
+	}
+    }
+
+    sub entity_iter_entities_cb {
+	my $self = shift;
+	my $relative = shift;
+	my $entity = shift;
+
+	print "    ", $entity->get_name(), "\n";
+    }
+
+    sub entity_iter_sensors_cb {
+	my $self = shift;
+	my $entity = shift;
+	my $sensor = shift;
+
+	print "Sensor: ", $sensor->get_name(), "\n";
+    }
+
+    sub entity_iter_controls_cb {
+	my $self = shift;
+	my $entity = shift;
+	my $control = shift;
+
+	print "Control: ", $control->get_name(), "\n";
+    }
+
+    sub domain_iter_entity_cb {
+	my $self = shift;
+	my $domain = shift;
+	my $entity = shift;
+
+	print "Entity: ", $entity->get_name(), "\n";
+	if ($entity->is_child()) {
+	    print "  Parents:\n";
+	    $entity->iterate_parents($self);
+	}
+	if ($entity->is_parent()) {
+	    print "  Children:\n";
+	    $entity->iterate_children($self);
+	}
+
+	$entity->iterate_sensors($self);
+	$entity->iterate_controls($self);
+    }
+
+    sub domain_iter_mc_cb {
+	my $self = shift;
+	my $domain = shift;
+	my $mc = shift;
+
+	print "MC: ", $mc->get_name(), "\n";
+
+	$event = $mc->first_event();
+	while (defined $event) {
+	    $self->event_cb($mc->get_domain(), $event);
+	    $event = $mc->next_event($event);
+	}
+    }
+
+    sub log {
+	my $self = shift;
+	my $level = shift;
+	my $log = shift;
+
+	print $level, ": ", $log, "\n";
+    }
+}
+
+$Handlers::stop_count = 1;
+
+OpenIPMI::enable_debug_malloc();
+OpenIPMI::init_posix();
+
+$h = Handlers::new("hello");
+
+OpenIPMI::set_log_handler($h);
+
+$a = OpenIPMI::open_domain2("test", \@ARGV, $h, $h);
+if (! $a) {
+    print "open failed\n";
+    exit 1;
+}
+
+while ($$h ne "done") {
+    OpenIPMI::wait_io(1000);
+}
+
+OpenIPMI::shutdown_everything();
+print "done\n";
+exit 0;

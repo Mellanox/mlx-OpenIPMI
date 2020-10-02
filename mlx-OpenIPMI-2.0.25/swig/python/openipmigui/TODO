@@ -1,0 +1,8 @@
+MC commands:
+   send message
+   SDR fetch and display
+Domain
+   fetch FRU
+   send message
+   pet - including the ability to save and restore them in the configuration
+snmp trap handling (saved as a stored configuration)

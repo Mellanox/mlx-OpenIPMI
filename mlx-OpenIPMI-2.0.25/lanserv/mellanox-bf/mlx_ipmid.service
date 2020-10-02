@@ -1,0 +1,15 @@
+[Unit]
+Description=ipmi daemon which creates a management controller on the Bluefield
+After=oneshot_emu_param.service
+Requires=oneshot_emu_param.service
+
+[Service]
+ExecStart=/usr/bin/ipmi_sim -c /etc/ipmi/mlx-bf.lan.conf -f /etc/ipmi/mlx-bf.emu -s /var
+Restart=always
+RestartSec=10
+TimeoutSec=60
+StandardOutput=append:/var/log/mlx_ipmid.log
+StandardError=append:/var/log/mlx_ipmid.log
+
+[Install]
+WantedBy=multi-user.target

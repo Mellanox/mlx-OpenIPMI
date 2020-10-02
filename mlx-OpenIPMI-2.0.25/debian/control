@@ -1,0 +1,35 @@
+Source: openipmi
+Section: admin
+Priority: optional
+Maintainer: Noël Köthe <noel@debian.org>
+Build-Depends: debhelper (>> 11.0.0), libsnmp-dev, libpopt-dev, libncurses5-dev, chrpath, libssl-dev
+Standards-Version: 4.1.4
+Homepage: http://openipmi.sourceforge.net/
+
+Package: openipmi
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, lsb-base
+Description: Intelligent Platform Management Interface (for servers)
+ IPMI allows remote monitoring and remote management of devices.
+ .
+ This package contains some command-line and graphical-user-interfaces
+ to interact with IPMI-enabled devices.
+
+Package: libopenipmi0
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Intelligent Platform Management Interface - runtime
+ IPMI allows remote monitoring and remote management of devices.
+ .
+ This package contains the runtime library.
+
+Package: libopenipmi-dev
+Section: libdevel
+Architecture: any
+Depends: libopenipmi0 (= ${binary:Version}), libgdbm-dev, ${misc:Depends}
+Description: Intelligent Platform Management Interface - development
+ IPMI allows remote monitoring and remote management of devices.
+ .
+ This package contains the development headers needed for compiling
+ programs against libopenipmi.
