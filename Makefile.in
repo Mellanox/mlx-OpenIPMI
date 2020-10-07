@@ -103,7 +103,7 @@ am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = config.h
-CONFIG_CLEAN_FILES = OpenIPMI.spec OpenIPMIutils.pc OpenIPMI.pc \
+CONFIG_CLEAN_FILES = OpenIPMIutils.pc OpenIPMI.pc \
 	OpenIPMIpthread.pc OpenIPMIposix.pc OpenIPMIglib.pc \
 	OpenIPMItcl.pc OpenIPMIcmdlang.pc OpenIPMIui.pc
 CONFIG_CLEAN_VPATH_FILES =
@@ -164,7 +164,7 @@ ETAGS = etags
 CTAGS = ctags
 CSCOPE = cscope
 am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/OpenIPMI.pc.in \
-	$(srcdir)/OpenIPMI.spec.in $(srcdir)/OpenIPMIcmdlang.pc.in \
+	$(srcdir)/OpenIPMIcmdlang.pc.in \
 	$(srcdir)/OpenIPMIglib.pc.in $(srcdir)/OpenIPMIposix.pc.in \
 	$(srcdir)/OpenIPMIpthread.pc.in $(srcdir)/OpenIPMItcl.pc.in \
 	$(srcdir)/OpenIPMIui.pc.in $(srcdir)/OpenIPMIutils.pc.in \
@@ -401,8 +401,8 @@ SUBDIRS = include utils lib unix $(GLIB_DIR) $(TCL_DIR) libedit cmdlang \
 DIST_SUBDIRS = include utils lib unix glib tcl libedit cmdlang \
 	     ui lanserv sample doc man swig
 
-EXTRA_DIST = FAQ TODO README.Force README.MotorolaMXP OpenIPMI.spec.in \
-	     OpenIPMI.spec ipmi.init ipmi.sysconf COPYING.BSD \
+EXTRA_DIST = FAQ TODO README.Force README.MotorolaMXP \
+	     ipmi.init ipmi.sysconf COPYING.BSD \
 	     CONFIGURING_FOR_LAN
 
 PKGCONFIGS = OpenIPMIutils.pc OpenIPMI.pc OpenIPMIui.pc OpenIPMIposix.pc \
@@ -411,7 +411,7 @@ PKGCONFIGS = OpenIPMIutils.pc OpenIPMI.pc OpenIPMIui.pc OpenIPMIposix.pc \
 
 ACLOCAL_AMFLAGS = -I m4
 PYPATH = $(top_builddir)/swig/python:$(top_builddir)/swig/python/.libs:$(srcdir)/openipmigui
-DISTCLEANFILES = OpenIPMI.spec OpenIPMIcmdlang.pc OpenIPMI.pc OpenIPMItcl.pc \
+DISTCLEANFILES = OpenIPMIcmdlang.pc OpenIPMI.pc OpenIPMItcl.pc \
 	OpenIPMIglib12.pc OpenIPMIposix.pc OpenIPMIui.pc OpenIPMIglib.pc \
 	OpenIPMIpthread.pc OpenIPMIutils.pc
 
@@ -467,8 +467,6 @@ $(srcdir)/config.h.in:  $(am__configure_deps)
 
 distclean-hdr:
 	-rm -f config.h stamp-h1
-OpenIPMI.spec: $(top_builddir)/config.status $(srcdir)/OpenIPMI.spec.in
-	cd $(top_builddir) && $(SHELL) ./config.status $@
 OpenIPMIutils.pc: $(top_builddir)/config.status $(srcdir)/OpenIPMIutils.pc.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 OpenIPMI.pc: $(top_builddir)/config.status $(srcdir)/OpenIPMI.pc.in

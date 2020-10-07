@@ -15,8 +15,7 @@ libOpenIPMIcmdlang_la_SOURCES = cmdlang.c cmd_domain.c cmd_entity.c cmd_mc.c \
 libOpenIPMIcmdlang_la_LIBADD = -lm \
 	$(top_builddir)/utils/libOpenIPMIutils.la \
 	$(top_builddir)/lib/libOpenIPMI.la
-libOpenIPMIcmdlang_la_LDFLAGS = -rdynamic -version-info $(LD_VERSION) \
-	-L$(libdir)
+libOpenIPMIcmdlang_la_LDFLAGS = -rdynamic -version-info $(LD_VERSION)
 
 bin_PROGRAMS = openipmish
 
@@ -35,6 +34,7 @@ openipmish_LDADD =  libOpenIPMIcmdlang.la \
 # compatability.
 install-data-local:
 	rm -f $(DESTDIR)$(bindir)/ipmish
+	mkdir -p $(DESTDIR)$(bindir)/
 	$(LN_S) openipmish $(DESTDIR)$(bindir)/ipmish
 
 uninstall-local:

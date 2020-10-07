@@ -15719,7 +15719,7 @@ else
 fi
 
 
-ac_config_files="$ac_config_files Makefile utils/Makefile lib/Makefile unix/Makefile glib/Makefile tcl/Makefile ui/Makefile lanserv/Makefile lanserv/OpenIPMI/Makefile lanserv/sdrcomp/Makefile lanserv/marvell-bmc/Makefile sample/Makefile doc/Makefile man/Makefile swig/Makefile swig/perl/Makefile swig/python/Makefile swig/python/openipmigui/Makefile libedit/Makefile cmdlang/Makefile include/Makefile include/OpenIPMI/Makefile include/OpenIPMI/ipmiif.h include/OpenIPMI/internal/Makefile OpenIPMI.spec OpenIPMIutils.pc OpenIPMI.pc OpenIPMIpthread.pc OpenIPMIposix.pc OpenIPMIglib.pc OpenIPMItcl.pc OpenIPMIcmdlang.pc OpenIPMIui.pc"
+ac_config_files="$ac_config_files Makefile utils/Makefile lib/Makefile unix/Makefile glib/Makefile tcl/Makefile ui/Makefile lanserv/Makefile lanserv/OpenIPMI/Makefile lanserv/sdrcomp/Makefile lanserv/marvell-bmc/Makefile sample/Makefile doc/Makefile man/Makefile swig/Makefile swig/perl/Makefile swig/python/Makefile swig/python/openipmigui/Makefile libedit/Makefile cmdlang/Makefile include/Makefile include/OpenIPMI/Makefile include/OpenIPMI/ipmiif.h include/OpenIPMI/internal/Makefile OpenIPMIutils.pc OpenIPMI.pc OpenIPMIpthread.pc OpenIPMIposix.pc OpenIPMIglib.pc OpenIPMItcl.pc OpenIPMIcmdlang.pc OpenIPMIui.pc"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -16760,7 +16760,6 @@ do
     "include/OpenIPMI/Makefile") CONFIG_FILES="$CONFIG_FILES include/OpenIPMI/Makefile" ;;
     "include/OpenIPMI/ipmiif.h") CONFIG_FILES="$CONFIG_FILES include/OpenIPMI/ipmiif.h" ;;
     "include/OpenIPMI/internal/Makefile") CONFIG_FILES="$CONFIG_FILES include/OpenIPMI/internal/Makefile" ;;
-    "OpenIPMI.spec") CONFIG_FILES="$CONFIG_FILES OpenIPMI.spec" ;;
     "OpenIPMIutils.pc") CONFIG_FILES="$CONFIG_FILES OpenIPMIutils.pc" ;;
     "OpenIPMI.pc") CONFIG_FILES="$CONFIG_FILES OpenIPMI.pc" ;;
     "OpenIPMIpthread.pc") CONFIG_FILES="$CONFIG_FILES OpenIPMIpthread.pc" ;;

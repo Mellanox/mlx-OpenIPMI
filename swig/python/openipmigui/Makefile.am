@@ -34,9 +34,9 @@ localcopy:
 		fi \
 	done
 
-all-local: localcopy $(PYC_FILES) $(PYO_FILES)
+all-local: localcopy
 
-install-exec-local: $(EXTRA_DIST) $(PYC_FILES) $(PYO_FILES)
+install-exec-local: $(EXTRA_DIST)
 	$(INSTALL) -d $(DESTDIR)$(PYTHON_INSTALL_DIR)/openipmigui
 	$(INSTALL_DATA) $^ $(DESTDIR)$(PYTHON_INSTALL_DIR)/openipmigui
 

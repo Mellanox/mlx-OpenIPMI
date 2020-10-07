@@ -45,17 +45,17 @@ elif [ -r /etc/init.d/functions ]; then
 	case "$ACTION" in
 	    success)
 		echo -n $*
-		success "$*"
+		success 0
 		echo
 		;;
 	    failure)
 		echo -n $*
-		failure "$*"
+		failure 1
 		echo
 		;;
 	    warning)
 		echo -n $*
-		warning "$*"
+		warning 0
 		echo
 		;;
 	    *)

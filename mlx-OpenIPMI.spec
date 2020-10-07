@@ -77,7 +77,6 @@ make %{?_smp_mflags}
 /usr/share/man/man1/ipmi_ui.1.gz
 /usr/share/man/man1/openipmi_eventd.1.gz
 /usr/share/man/man1/openipmicmd.1.gz
-/usr/share/man/man1/openipmigui.1.gz
 /usr/share/man/man1/openipmish.1.gz
 /usr/share/man/man1/rmcp_ping.1.gz
 /usr/share/man/man1/solterm.1.gz
