@@ -86,18 +86,9 @@ if [ "$is_bluewhale" = "Bluewhale" ] || [ "$support_ipmb" = "1" ]; then
 	if [ ! "$(lsmod | grep ipmi_devintf)" ]; then
 		modprobe ipmi_devintf
 	fi
-	# poll every 18 seconds if the driver fails to load.
-	if [ $(( $t % 6 )) -eq 0 ] || [ "$t" = "$fru_timer" ]; then
-		if [ ! "$(lsmod | grep ipmb_host)" ]; then
-			modprobe ipmb_host slave_add=$IPMB_HOST_CLIENTADDR
-			echo ipmb-host $IPMB_HOST_ADD > $I2C2_NEW_DEV
-
-			ipmitool mc info > /dev/null 2>&1
-			if [ ! $? -eq 0 ]; then
-				rmmod ipmb_host
-				echo $IPMB_HOST_ADD > $I2C2_DEL_DEV
-			fi
-		fi
+	if [ ! "$(lsmod | grep ipmb_host)" ]; then
+		modprobe ipmb_host slave_add=$IPMB_HOST_CLIENTADDR
+		echo ipmb-host $IPMB_HOST_ADD > $I2C2_NEW_DEV
 	fi
 fi #support_ipmb
 
