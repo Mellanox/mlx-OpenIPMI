@@ -68,6 +68,7 @@ I2C2_DEL_DEV=/sys/bus/i2c/devices/i2c-2/delete_device
 
 is_bluewhale=$1
 support_ipmb=$2
+oob_ip=$3
 
 if [ "$is_bluewhale" = "Bluewhale" ] || [ "$support_ipmb" = "1" ]; then
 	# Instantiate the ipmb-dev device
@@ -91,6 +92,18 @@ if [ "$is_bluewhale" = "Bluewhale" ] || [ "$support_ipmb" = "1" ]; then
 		echo ipmb-host $IPMB_HOST_ADD > $I2C2_NEW_DEV
 	fi
 fi #support_ipmb
+
+if [ ! "$oob_ip" = "0" ]; then
+	if ! grep -q "startlan 2" /etc/ipmi/mlx-bf.lan.conf; then
+		cat <<- EOF >> /etc/ipmi/mlx-bf.lan.conf
+		  startlan 2
+		    addr $oob_ip 623
+		    priv_limit admin
+		    guid a123456789abcdefa123456789abcdef
+		  endlan
+		EOF
+	fi
+fi #oob_ip
 
 ###############################
 # Collect sensor and fru data #
