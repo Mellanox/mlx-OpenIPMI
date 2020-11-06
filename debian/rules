@@ -89,9 +89,9 @@ binary-common:
 	dh_installchangelogs ChangeLog
 	dh_installdocs
 	dh_installexamples
-	dh_installinit -p openipmi --name openipmi --no-start -- defaults 21 20
-	mv ipmi.sysconf openipmi
-	dh_install openipmi etc/default
+	dh_installinit -p mlx-openipmi --name mlx-openipmi --no-start -- defaults 21 20
+	mv ipmi.sysconf mlx-openipmi
+	dh_install mlx-openipmi etc/default
 	dh_installman
 	dh_link
 	dh_strip

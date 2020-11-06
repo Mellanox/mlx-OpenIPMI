@@ -1,4 +1,4 @@
-openipmi (2.0.25-2.2) unstable; urgency=medium
+mlx-openipmi (2.0.25-2.2) unstable; urgency=medium
 
   * Mellanox specific patch file to support the IPMB interface and
     BlueField sensors and FRUs.
