@@ -448,7 +448,7 @@ else
 
 	if [ "$bdf" != "NULL" ]; then
 		cat <<- EOF > $EMU_PARAM_DIR/fw_info
-		$(/opt/mlnx/scripts/bfver | sed '1d')
+		$(/usr/bin/bfver | sed '1d')
 		BlueField OFED Version: $(ofed_info -s | sed 's/.$//')
 		connectx_fw_ver: $(cat /sys/class/infiniband/mlx*_$port/fw_ver)
 		board_id: $(cat /sys/class/infiniband/mlx*_$port/board_id)
