@@ -192,6 +192,15 @@ get_connectx_net_info() {
 		eth="p$1"
 	fi
 
+	if [ "$1" = "0" ]; then
+		echo "LAN interface: $eth" > $EMU_PARAM_DIR/eth_hw_counters
+	else
+		echo "LAN interface: $eth" >> $EMU_PARAM_DIR/eth_hw_counters
+	fi
+
+	cd /sys/class/infiniband/mlx5_$1/ports/1/hw_counters
+	grep '' * >> $EMU_PARAM_DIR/eth_hw_counters
+
 	echo "LAN Interface:" > $EMU_PARAM_DIR/eth$1
 	ifconfig $eth >> $EMU_PARAM_DIR/eth$1 2>/dev/null
 	if [ ! $? -eq 0 ]; then
@@ -530,6 +539,7 @@ if [ $(( $t % 20 )) -eq 0 ]; then
 	get_connectx_net_info "0"
 	get_connectx_net_info "1"
 fi
+truncate -s 3000 $EMU_PARAM_DIR/eth_hw_counters
 
 
 # We don't want to update the FRU data as often as the temp values
@@ -656,6 +666,7 @@ if [ "$t" = "$fru_timer" ]; then
 	wc -c $EMU_PARAM_DIR/dimms_ce_ue | cut -f 1 -d " " > $EMU_PARAM_DIR/dimms_ce_ue_filelen
 	wc -c $EMU_PARAM_DIR/eth0 | cut -f 1 -d " " > $EMU_PARAM_DIR/eth0_filelen
 	wc -c $EMU_PARAM_DIR/eth1 | cut -f 1 -d " " > $EMU_PARAM_DIR/eth1_filelen
+	wc -c $EMU_PARAM_DIR/eth_hw_counters | cut -f 1 -d " " > $EMU_PARAM_DIR/eth_hw_counters_filelen
 
 	add_fru "emmc_info" 8
 	add_fru "qsfp0_eeprom" 9
@@ -666,6 +677,9 @@ if [ "$t" = "$fru_timer" ]; then
 	fi
 	if [ -s $EMU_PARAM_DIR/eth1_filelen ]; then
 		add_fru "eth1" 14
+	fi
+	if [ -s $EMU_PARAM_DIR/eth_hw_counters_filelen ]; then
+		add_fru "eth_hw_counters" 16
 	fi
 
 	mlxreg -d /dev/mst/mt*_pciconf0 --reg_name MDIR --get | awk '{if(NR>2)print}' \
