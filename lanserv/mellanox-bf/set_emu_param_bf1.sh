@@ -14,15 +14,11 @@ if [ ! -d $EMU_PARAM_DIR ]; then
 	mkdir $EMU_PARAM_DIR
 fi
 
+# BMC writes its ip address and the QSFP ports addresses to the
+# BlueField through the ip_addresses files.
 if [ ! -s  $EMU_PARAM_DIR/ip_addresses ]; then
 	touch $EMU_PARAM_DIR/ip_addresses
 fi
-
-#############################################
-# The ipmb_dev_int driver is already loaded #
-# by default in the install image. This     #
-# script instantiates the IPMB device.      #
-#############################################
 
 # This timer is used to update the FRUs
 # once every hour. It also informs the user
@@ -63,15 +59,13 @@ IPMB_HOST_ADD=0x1011
 # a client at address 0x10.
 IPMB_HOST_CLIENTADDR=0x10
 
-I2C2_NEW_DEV=/sys/bus/i2c/devices/i2c-2/new_device
-I2C2_DEL_DEV=/sys/bus/i2c/devices/i2c-2/delete_device
-
-is_bluewhale=$1
+bffamily=$1
 support_ipmb=$2
-oob_ip=$3
 
-if [ "$is_bluewhale" = "Bluewhale" ] || [ "$support_ipmb" = "1" ]; then
-	# Instantiate the ipmb-dev device
+I2C2_NEW_DEV=/sys/bus/i2c/devices/i2c-2/new_device
+
+if [ "$bffamily" = "Bluewhale" ] || [ "$support_ipmb" != "0" ]; then
+	# Instantiate the ipmb-dev device. The driver is already loaded by default.
 	if [ ! -c "/dev/ipmb-2" ]; then
 		echo ipmb-dev $IPMB_DEV_INT_ADD > $I2C2_NEW_DEV
 	fi
@@ -91,33 +85,11 @@ if [ "$is_bluewhale" = "Bluewhale" ] || [ "$support_ipmb" = "1" ]; then
 		modprobe ipmb_host slave_add=$IPMB_HOST_CLIENTADDR
 		echo ipmb-host $IPMB_HOST_ADD > $I2C2_NEW_DEV
 	fi
-fi #support_ipmb
+fi
 
-if [ ! "$oob_ip" = "0" ]; then
-	if ! grep -q "startlan 2" /etc/ipmi/mlx-bf.lan.conf; then
-		cat <<- EOF >> /etc/ipmi/mlx-bf.lan.conf
-		  startlan 2
-		    addr $oob_ip 623
-		    priv_limit admin
-		    guid a123456789abcdefa123456789abcdef
-		  endlan
-		EOF
-	fi
-fi #oob_ip
-
-###############################
-# Collect sensor and fru data #
-###############################
-
-# The following addresses are all in hex.
-SPD0_I2C_ADDR=50
-SPD1_I2C_ADDR=51
-SPD2_I2C_ADDR=52
-SPD3_I2C_ADDR=53
-
-SPDS_ADDR="$SPD0_I2C_ADDR $SPD1_I2C_ADDR $SPD2_I2C_ADDR $SPD3_I2C_ADDR"
-
-I2C1_DEVPATH=/sys/bus/i2c/devices/i2c-1/new_device
+###################################################################################################
+# Collect sensor and fru data                                                                     #
+###################################################################################################
 
 remove_sensor() {
 	rm -f $EMU_PARAM_DIR/$1
@@ -178,11 +150,11 @@ get_qsfp_temp() {
 }
 
 
-###########################################
-# Get connectX network interfaces information
-#
-# $1 is the original network name
-###########################################
+##########################################################
+# Get connectX network interfaces information            #
+#                                                        #
+# $1 is the original network name                        #
+##########################################################
 get_connectx_net_info() {
 	# In the BlueWhale and other similar designs,
 	# udev renames the interfaces to enp*f* while on
@@ -276,6 +248,16 @@ get_connectx_net_info() {
 ####################################################
 #               Get SPDs' information              #
 ####################################################
+# The following addresses are all in hex.
+SPD0_I2C_ADDR=50
+SPD1_I2C_ADDR=51
+SPD2_I2C_ADDR=52
+SPD3_I2C_ADDR=53
+
+SPDS_ADDR="$SPD0_I2C_ADDR $SPD1_I2C_ADDR $SPD2_I2C_ADDR $SPD3_I2C_ADDR"
+
+I2C1_DEVPATH=/sys/bus/i2c/devices/i2c-1/new_device
+
 if [ ! "$(lsmod | grep ee1004)" ]; then
 	modprobe ee1004
 fi
@@ -395,7 +377,7 @@ else
 
 	if [ -s $EMU_PARAM_DIR/eth_bdfs.txt ]; then
 		while read bdf; do
-			link_status=$(cat /sys/bus/pci/devices/0000\:$bdf/net/e*/operstate)
+			link_status=$(cat /sys/bus/pci/devices/0000\:$bdf/net/*/operstate)
 			func=$(echo $bdf | cut -f 1 -d " " | cut -f 2 -d ".")
 
 			if [ "$link_status" = "up" ]; then
@@ -409,7 +391,7 @@ else
 	if [ -s $EMU_PARAM_DIR/ib_bdfs.txt ]; then
 		while read bdf; do
 			func=$(echo $bdf | cut -f 1 -d " " | cut -f 2 -d ".")
-			link_status=$(cat /sys/class/net/ib$func/operstate)
+			link_status=$(cat /sys/class/net/ib*/operstate)
 
 			if [ "$link_status" = "up" ]; then
 				echo 1 > $EMU_PARAM_DIR/p$func"_link"

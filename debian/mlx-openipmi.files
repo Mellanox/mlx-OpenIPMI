@@ -1,5 +1,5 @@
 lib/systemd/system/*
-var/ipmi_sim/mellanox/sdr.30.main
+var/ipmi_sim/mellanox/sdr.30.main*
 etc/ipmi/*
 usr/bin/*
 usr/share/info/OpenIPMI.inf*

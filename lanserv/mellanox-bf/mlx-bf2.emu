@@ -1,0 +1,81 @@
+# This file implements a management controller on the BlueField and enables all sensors
+# and FRUs used to collect data.
+
+# The BF's MC is at address 30
+mc_setbmc 0x30
+
+# Add the MC
+# mc_add IPMBaddress DeviceID HasDeviceSDRs DeviceRevision MajorFWRev MinorFWRev
+# DeviceSupport ManufacturerID ProductID
+mc_add 0x30 0x30 no-device-sdrs 0x1 1 0 0x9f 0x8119 0x3 persist_sdr
+
+# sel_enable mc-addr max-entries flags
+sel_enable 0x30 1000 0x0a
+
+
+################ Temperature ################
+#
+# If a temperature sensor is not present
+# on the system or one of the data files
+# is missing or unpopulated, set_emu_param.sh
+# script takes care of commenting out the
+# corresponding sensor in this file.
+#
+# ###########################################
+
+# Add the BF temperature sensor
+# sensor_add mc-addr LUN sensor-num sensor-type event-reading-code
+sensor_add 0x30 0 0 0x01 0x01	\
+	poll 5000		\
+	file "/var/emu_param/bluefield_temp"
+
+# Add QSFP port 0 temperature sensor
+sensor_add 0x30 0 1 0x01 0x01	\
+	poll 5000		\
+	file "/var/emu_param/p0_temp" sub=-128
+
+# Add QSFP port 1 temperature sensor
+sensor_add 0x30 0 2 0x01 0x01	\
+	poll 5000		\
+	file "/var/emu_param/p1_temp" sub=-128
+
+# Add sensor for detecting whether QSFP links are up or down
+# QSFP port 0 link status
+sensor_add 0x30 0 3 0x1b 0x6f	\
+	poll 5000		\
+	file "/var/emu_param/p0_link"
+
+# QSFP port 1 link status
+sensor_add 0x30 0 4 0x1b 0x6f	\
+	poll 5000		\
+	file "/var/emu_param/p1_link"
+
+########## FRUs ##########
+
+# mc_add_fru_data mc-addr DeviceID FRUSize (data byte1 ... byteN |
+# file offset filename)
+# FRUSize = file length = number of characters in file
+# CPU Info
+# mc_add_fru_data 0x30 4 <cpuinfo file length> file 0 "/proc/cpuinfo"
+
+#
+# This FRU will be empty at init time.
+# This FRU should be populated via the BMC by issuing an
+# 'ipmitool fru write 11 fru.txt' command. The fru.txt
+# file will be used to pass the BMC ip, the qsfp port 0
+# ip and the qsfp port 1 ip addresses to the BF.
+# The file should be 61 bytes long in ASCII format as follows:
+# BMC: 011.022.033.044
+# P0: 192.033.044.022
+# P1: 033.044.055.066
+#
+# If the BMC address is 11.22.33.44, it needs to be passed
+# as shown above to keep the 61 byte file size.
+#
+mc_add_fru_data 0x30 7 61 file 0 "/var/emu_param/ip_addresses"
+
+#The following is a marker for the set_emu_param.sh file to remove and initialize
+#fru files' length.
+
+#DELETE AT START
+mc_enable 0x30

@@ -1,4 +1,5 @@
 SUPPORT_IPMB=0
 LOOP_PERIOD=3
 BF_FAMILY=$(/usr/bin/bffamily | tr -d '[:space:]')
+BF_PLAT=$(/usr/bin/bfhcafw mcra 0xf0014.0:16)
 OOB_IP="0"

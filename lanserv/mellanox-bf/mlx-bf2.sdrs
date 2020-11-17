@@ -1,0 +1,437 @@
+
+sdr type 18
+	device_slave_address	0x30
+	device_channel_number	0
+	chassis			true
+	bridge			true
+	ipmb_event_gen		true
+	ipmb_event_recv		true
+	fru_inventory		true
+	sel			true
+	sdr			true
+	sensor			true
+	entity_id		system_board
+	entity_instance		1
+	id_string		"Bluefield_MC"
+endsdr
+
+# There are 7 temperature sensors but the fw reports the
+# highest of the 7 sensors.
+sdr type 1
+	sensor_owner_id		0x30
+	sensor_owner_lun	0
+	channel_number		0
+	sensor_number		0
+	entity_id		system_board
+	entity_instance		2
+	sensor_type		Temperature
+	event_reading_type_code	1
+	init_scanning		true
+	init_events		true
+	init_thresholds		true
+	init_hysteresis		true
+	init_sensor_type	true
+	default_event_gen_on	true
+	default_sensor_scan_on	true
+	sensor_auto_rearm	true
+	sensor_event_msg_ctrl	per_state
+	sensor_threshold_access	settable
+	return_lnc		true
+	return_lc		true
+	return_unc		true
+	return_uc		true
+	deassert_lncgl		true
+	deassert_uncgh		true
+	deassert_lcgl		true
+	deassert_ucgh		true
+	assert_lncgl		true
+	assert_uncgh		true
+	assert_lcgl		true
+	assert_ucgh		true
+	lnc_thrsh_settable	true
+	unc_thrsh_settable	true
+	lc_thrsh_settable	true
+	uc_thrsh_settable	true
+	lnc_thrsh_readable	true
+	unc_thrsh_readable	true
+	lc_thrsh_readable	true
+	uc_thrsh_readable	true
+	analog_data_format	unsigned
+	rate_unit		none
+	modifier_unit		none
+	percentage		false
+	base_unit		degrees_C
+	modifier_unit_code	unspecified
+	linearization		linear
+	nominal_specified	true
+	nominal_reading		44
+	m			1
+	tolerance		0
+	b			0
+	accuracy		1
+	accuracy_exp		0
+	sensor_direction	input
+	r_exp			0
+	b_exp			0
+	sensor_maximum		255
+	sensor_minimum		0
+	lc_fthresh		0
+	lnc_fthresh		5
+	unc_fthresh		95
+	uc_fthresh		105
+	positive_hysteresis	3
+	negative_hysteresis	3
+	id_string		"bluefield_temp"
+endsdr
+
+# Temperature sensor for transceiver port 0
+sdr type 1
+	sensor_owner_id		0x30
+	sensor_owner_lun	0
+	channel_number		0
+	sensor_number		1
+	entity_id		cable_interconnect
+	entity_instance		1
+	sensor_type		Temperature
+	event_reading_type_code	1
+	init_scanning		true
+	init_events		true
+	init_thresholds		true
+	init_hysteresis		true
+	init_sensor_type	true
+	default_event_gen_on	true
+	default_sensor_scan_on	true
+	sensor_auto_rearm	true
+	sensor_event_msg_ctrl	per_state
+	sensor_threshold_access	settable
+	return_lnc		true
+	return_lc		true
+	return_unc		true
+	return_uc		true
+	deassert_lncgl		true
+	deassert_uncgh		true
+	deassert_lcgl		true
+	deassert_ucgh		true
+	assert_lncgl		true
+	assert_uncgh		true
+	assert_lcgl		true
+	assert_ucgh		true
+	lnc_thrsh_settable	true
+	unc_thrsh_settable	true
+	lc_thrsh_settable	true
+	uc_thrsh_settable	true
+	lnc_thrsh_readable	true
+	unc_thrsh_readable	true
+	lc_thrsh_readable	true
+	uc_thrsh_readable	true
+	analog_data_format	unsigned
+	rate_unit		none
+	modifier_unit		none
+	percentage		false
+	base_unit		degrees_C
+	modifier_unit_code	unspecified
+	linearization		linear
+	nominal_specified	true
+	nominal_reading		168
+	m			1
+	tolerance		0
+	b			-128
+	accuracy		1
+	accuracy_exp		0
+	sensor_direction	input
+	r_exp			0
+	b_exp			0
+	sensor_maximum		228
+	sensor_minimum		100
+	lc_fthresh		-5
+	lnc_fthresh		0
+	unc_fthresh		70
+	uc_fthresh		75
+	positive_hysteresis	3
+	negative_hysteresis	3
+	id_string		"p0_temp"
+endsdr
+
+# Temperature sensor for transceiver port 1
+sdr type 1
+	sensor_owner_id		0x30
+	sensor_owner_lun	0
+	channel_number		0
+	sensor_number		2
+	entity_id		cable_interconnect
+	entity_instance		2
+	sensor_type		Temperature
+	event_reading_type_code	1
+	init_scanning		true
+	init_events		true
+	init_thresholds		true
+	init_hysteresis		true
+	init_sensor_type	true
+	default_event_gen_on	true
+	default_sensor_scan_on	true
+	sensor_auto_rearm	true
+	sensor_event_msg_ctrl	per_state
+	sensor_threshold_access	settable
+	return_lnc		true
+	return_lc		true
+	return_unc		true
+	return_uc		true
+	deassert_lncgl		true
+	deassert_uncgh		true
+	deassert_lcgl		true
+	deassert_ucgh		true
+	assert_lncgl		true
+	assert_uncgh		true
+	assert_lcgl		true
+	assert_ucgh		true
+	lnc_thrsh_settable	true
+	unc_thrsh_settable	true
+	lc_thrsh_settable	true
+	uc_thrsh_settable	true
+	lnc_thrsh_readable	true
+	unc_thrsh_readable	true
+	lc_thrsh_readable	true
+	uc_thrsh_readable	true
+	analog_data_format	unsigned
+	rate_unit		none
+	modifier_unit		none
+	percentage		false
+	base_unit		degrees_C
+	modifier_unit_code	unspecified
+	linearization		linear
+	nominal_specified	true
+	nominal_reading		168
+	m			1
+	tolerance		0
+	b			-128
+	accuracy		1
+	accuracy_exp		0
+	sensor_direction	input
+	r_exp			0
+	b_exp			0
+	sensor_maximum		228
+	sensor_minimum		100
+	lc_fthresh		-5
+	lnc_fthresh		0
+	unc_fthresh		70
+	uc_fthresh		75
+	positive_hysteresis	3
+	negative_hysteresis	3
+	id_string		"p1_temp"
+endsdr
+
+# Report status of QSFP port link 0: up/down
+sdr type 2
+	sensor_owner_id		0x30
+	sensor_owner_lun	0
+	channel_number		0
+	sensor_number		3
+	entity_id		cable_interconnect
+	entity_instance		3
+	sensor_type		Cable_Interconnect
+	event_reading_type_code	0x6f
+	init_scanning		true
+	default_event_gen_on	true
+	default_sensor_scan_on	true
+	sensor_hysteresis	no
+	sensor_threshold_access	no
+	sensor_event_msg_ctrl	per_state
+	sensor_auto_rearm	false
+	init_events		true
+	init_sensor_type	true
+	event0_state_ret	true
+	assert_event0		true
+	deassert_event0		true
+	event1_state_ret	true
+	assert_event1		true
+	deassert_event1		true
+	id_string		"p0_link"
+endsdr
+
+# Report status of QSFP port link 1: up/down
+sdr type 2
+	sensor_owner_id		0x30
+	sensor_owner_lun	0
+	channel_number		0
+	sensor_number		4
+	entity_id		cable_interconnect
+	entity_instance		4
+	sensor_type		Cable_Interconnect
+	event_reading_type_code	0x6f
+	init_scanning		true
+	default_event_gen_on	true
+	default_sensor_scan_on	true
+	sensor_hysteresis	no
+	sensor_threshold_access	no
+	sensor_auto_rearm	false
+	sensor_event_msg_ctrl	per_state
+	init_events		true
+	init_sensor_type	true
+	event0_state_ret	true
+	assert_event0		true
+	deassert_event0		true
+	event1_state_ret	true
+	assert_event1		true
+	deassert_event1		true
+	id_string		"p1_link"
+endsdr
+
+# Timer for next FRU update
+sdr type 0x11
+	device_access_address	0x30
+	fru_device_address	0
+	logical_fru		1
+	lun			0
+	device_type		0x10
+	device_type_modifier	0
+	fru_entity_id		other
+	fru_entity_instance	1
+	id_string		"update_timer"
+endsdr
+
+# FW information
+sdr type 0x11
+	device_access_address	0x30
+	fru_device_address	1
+	logical_fru		1
+	lun			0
+	device_type		0x10
+	device_type_modifier	0
+	fru_entity_id		management_controller_firmware
+	fru_entity_instance	1
+	id_string		"fw_info"
+endsdr
+
+# FRU for NIC PCI dev info
+sdr type 0x11
+	device_access_address	0x30
+	fru_device_address	2
+	logical_fru		1
+	lun			0
+	device_type		0x10
+	device_type_modifier	0
+	fru_entity_id		processor_module
+	fru_entity_instance	1
+	id_string		"nic_pci_dev_info"
+endsdr
+
+# Board CPU info
+sdr type 0x11
+	device_access_address	0x30
+	fru_device_address	3
+	logical_fru		1
+	lun			0
+	device_type		0x10
+	device_type_modifier	0
+	fru_entity_id		processor
+	fru_entity_instance	1
+	id_string		"cpuinfo"
+endsdr
+
+sdr type 0x11
+	device_access_address	0x30
+	fru_device_address	4
+	logical_fru		1
+	lun			0
+	device_type		0x10
+	device_type_modifier	0
+	fru_entity_id		memory_module
+	fru_entity_instance	1
+	id_string		"emmc_info"
+endsdr
+
+sdr type 0x11
+	device_access_address	0x30
+	fru_device_address	5
+	logical_fru		1
+	lun			0
+	device_type		0x10
+	device_type_modifier	0
+	fru_entity_id		memory_module
+	fru_entity_instance	2
+	id_string		"qsfp0_eeprom"
+endsdr
+
+sdr type 0x11
+	device_access_address	0x30
+	fru_device_address	6
+	logical_fru		1
+	lun			0
+	device_type		0x10
+	device_type_modifier	0
+	fru_entity_id		memory_module
+	fru_entity_instance	3
+	id_string		"qsfp1_eeprom"
+endsdr
+
+sdr type 0x11
+	device_access_address	0x30
+	fru_device_address	7
+	logical_fru		1
+	lun			0
+	device_type		0x10
+	device_type_modifier	0
+	fru_entity_id		other
+	fru_entity_instance	2
+	id_string		"ip_addresses"
+endsdr
+
+sdr type 0x11
+	device_access_address	0x30
+	fru_device_address	8
+	logical_fru		1
+	lun			0
+	device_type		0x10
+	device_type_modifier	0
+	fru_entity_id		memory_module
+	fru_entity_instance	3
+	id_string		"dimms_ce_ue"
+endsdr
+
+sdr type 0x11
+	device_access_address	0x30
+	fru_device_address	9
+	logical_fru		1
+	lun			0
+	device_type		0x10
+	device_type_modifier	0
+	fru_entity_id		other
+	fru_entity_instance	3
+	id_string		"eth0"
+endsdr
+
+sdr type 0x11
+	device_access_address	0x30
+	fru_device_address	10
+	logical_fru		1
+	lun			0
+	device_type		0x10
+	device_type_modifier	0
+	fru_entity_id		other
+	fru_entity_instance	4
+	id_string		"eth1"
+endsdr
+
+sdr type 0x11
+	device_access_address	0x30
+	fru_device_address	11
+	logical_fru		1
+	lun			0
+	device_type		0x10
+	device_type_modifier	0
+	fru_entity_id		other
+	fru_entity_instance	5
+	id_string		"bf_uid"
+endsdr
+
+sdr type 0x11
+	device_access_address	0x30
+	fru_device_address	12
+	logical_fru		1
+	lun			0
+	device_type		0x10
+	device_type_modifier	0
+	fru_entity_id		other
+	fru_entity_instance	6
+	id_string		"eth_hw_counters"
+endsdr

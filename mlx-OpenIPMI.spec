@@ -86,13 +86,15 @@ make %{?_smp_mflags}
 /usr/share/man/man7/openipmi_conparms.7.gz
 /usr/share/man/man8/ipmilan.8.gz
 %{_bindir}/ipmi*
-%{_bindir}/set_emu_param.sh
+%{_bindir}/set_emu_param_bf1.sh
+%{_bindir}/set_emu_param_bf2.sh
+%{_bindir}/oneshot_emu_param.sh
 %{_bindir}/poll_set_emu_param.sh
 /usr/lib64/libOpen*
 /usr/lib64/libIPMI*
 /usr/lib64/pkgconfig/OpenIPMI*
 /etc/ipmi/*
-/var/ipmi_sim/mellanox/sdr.30.main
+/var/ipmi_sim/mellanox/sdr.30.main*
 /lib/systemd/system/oneshot_emu_param.service
 /lib/systemd/system/set_emu_param.service
 /lib/systemd/system/mlx_ipmid.service
