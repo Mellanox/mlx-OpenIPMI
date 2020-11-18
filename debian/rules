@@ -94,6 +94,7 @@ binary-common:
 	dh_install mlx-openipmi etc/default
 	dh_installman
 	dh_link
+	dh_installsystemd -pmlx-openipmi
 	dh_strip
 	dh_compress
 	dh_fixperms
