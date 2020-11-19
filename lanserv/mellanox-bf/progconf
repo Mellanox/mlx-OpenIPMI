@@ -1,4 +1,4 @@
-SUPPORT_IPMB=0
+SUPPORT_IPMB="NONE"
 LOOP_PERIOD=3
 BF_FAMILY=$(/usr/bin/bffamily | tr -d '[:space:]')
 OOB_IP="0"
