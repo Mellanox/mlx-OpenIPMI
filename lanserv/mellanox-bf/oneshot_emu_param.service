@@ -4,7 +4,7 @@ Description=Collect about BlueField's sensors and FRUs once
 [Service]
 Type=oneshot
 EnvironmentFile=/etc/ipmi/progconf
-ExecStart=/bin/bash -c '/usr/bin/set_emu_param.sh ${BF_FAMILY} ${SUPPORT_IPMB} ${OOB_IP}'
+ExecStart=/bin/bash -c '/usr/bin/set_emu_param.sh ${BF_FAMILY} ${SUPPORT_IPMB} ${OOB_IP} ${EXTERNAL_DDR}'
 
 [Install]
 WantedBy=multi-user.target

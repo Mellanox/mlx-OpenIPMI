@@ -62,6 +62,7 @@ IPMB_HOST_CLIENTADDR=0x10
 bffamily=$1
 support_ipmb=$2
 oob_ip=$3
+external_ddr=$4
 
 if [ "$bffamily" = "Bluewhale" ]; then
 	i2cbus=2
@@ -279,10 +280,11 @@ SPDS_ADDR="$SPD0_I2C_ADDR $SPD1_I2C_ADDR $SPD2_I2C_ADDR $SPD3_I2C_ADDR"
 
 I2C1_DEVPATH=/sys/bus/i2c/devices/i2c-1/new_device
 
-if [ ! "$(lsmod | grep ee1004)" ]; then
-	modprobe ee1004
+if [ "$bffamily" = "Bluewhale" ] || [ "$external_ddr" = "YES" ]; then
+	if [ ! "$(lsmod | grep ee1004)" ]; then
+		modprobe ee1004
+	fi
 fi
-
 if [ "$(lsmod | grep ee1004)" ]; then
 	# Up to 4 SPDs can be connected to I2C bus 1. To
 	# read information contained in those SPDs, the ee1004
@@ -304,11 +306,13 @@ fi
 ###############################################
 #           Get DIMMs' temperature            #
 ###############################################
-if [ ! "$(lsmod | grep jc42)" ]; then
-	modprobe jc42
+if [ "$bffamily" = "Bluewhale" ] || [ "$external_ddr" = "YES" ]; then
+	if [ ! "$(lsmod | grep jc42)" ]; then
+		modprobe jc42
 
-	if [ "$(lsmod | grep jc42)" ]; then
-		sensors -s
+		if [ "$(lsmod | grep jc42)" ]; then
+			sensors -s
+		fi
 	fi
 fi
 
@@ -425,8 +429,8 @@ fi
 
 wc -c $EMU_PARAM_DIR/nic_pci_dev_info | cut -f 1 -d " " > $EMU_PARAM_DIR/nic_pci_dev_info_filelen
 
-rm $EMU_PARAM_DIR/eth_bdfs.txt
-rm $EMU_PARAM_DIR/ib_bdfs.txt
+rm -f $EMU_PARAM_DIR/eth_bdfs.txt
+rm -f $EMU_PARAM_DIR/ib_bdfs.txt
 
 
 ###################################

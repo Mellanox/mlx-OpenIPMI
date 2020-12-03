@@ -9,6 +9,6 @@
 # should be set to "0".
 
 while /bin/true; do
-	/usr/bin/set_emu_param.sh $2 $3 $4
+	/usr/bin/set_emu_param.sh $2 $3 $4 $5
 	sleep $1
 done
