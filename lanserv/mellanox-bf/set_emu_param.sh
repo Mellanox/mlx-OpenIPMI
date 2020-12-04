@@ -81,7 +81,7 @@ if [ "$i2cbus" != "NONE" ]; then
 	fi
 
 	if ! grep -q "ipmb-$i2cbus" /etc/ipmi/mlx-bf.lan.conf; then
-		echo "  ipmb $i2cbus ipmb_dev_int /dev/ipmb-$i2cbus" >> /etc/ipmi/mlx-bf.lan.conf
+		echo "  ipmb 2 ipmb_dev_int /dev/ipmb-$i2cbus" >> /etc/ipmi/mlx-bf.lan.conf
 	fi
 
 	# load the ipmb_host driver
