@@ -259,11 +259,13 @@ get_connectx_net_info() {
 		fi
 	fi
 
-	ethtool -S $eth | grep prio >> $EMU_PARAM_DIR/eth$1
+	data="prio|rx_symbol_err_phy|rx_pcs_symbol_err_phy|rx_crc_errors_phy"
+	data+="|rx_corrected_bits_phy|[rt]x_pause_ctrl"
+	ethtool -S $eth | grep -E $data >> $EMU_PARAM_DIR/eth$1
 	echo "End LAN Interface" >> $EMU_PARAM_DIR/eth$1
 
 	# Pad the file with spaces in case the size of the temp files increases
-	truncate -s 3000 $EMU_PARAM_DIR/eth$1
+	truncate -s 3200 $EMU_PARAM_DIR/eth$1
 }
 
 
