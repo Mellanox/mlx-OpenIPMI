@@ -118,8 +118,9 @@ remove_sensor() {
 }
 
 add_fru() {
-	if [ $(cat $EMU_PARAM_DIR/$1"_filelen") -gt 0 ]; then
-		echo "mc_add_fru_data 0x30 $2 $(cat $EMU_PARAM_DIR/$1"_filelen") file 0 \"$EMU_PARAM_DIR/$1\"" >> $EMU_FILE_PATH
+	filelen=$(cat $EMU_PARAM_DIR/$1"_filelen")
+	if [ $filelen -gt 0 ]; then
+		echo "mc_add_fru_data 0x30 $2 $filelen file 0 \"$EMU_PARAM_DIR/$1\"" >> $EMU_FILE_PATH
 	fi
 }
 
@@ -703,8 +704,4 @@ if [ "$t" = "$fru_timer" ]; then
 	add_fru "bf_uid" 15
 
 	echo "mc_enable 0x30" >> $EMU_FILE_PATH
-else
-	#update the fru timer
-	ipmb_update_timer_fru=$(echo "mc_add_fru_data 0x30 0 6 file 0 \"$EMU_PARAM_DIR/ipmb_update_timer\"")
-	sed -i "s~.*ipmb_update_timer.*~$ipmb_update_timer_fru~" $EMU_FILE_PATH
 fi
