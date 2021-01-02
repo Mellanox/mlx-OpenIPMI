@@ -482,6 +482,15 @@ else
 		EOF
 	fi
 fi
+
+if [ "$bffamily" = "BlueSphere" ]; then
+	ssd_v=$(lspci -vv  | grep "Non-Volatile memory controller" | cut -d ":" -f 3)
+	if [ -z "$ssd_v" ]; then
+		ssd_v="No SSD found"
+	fi
+	echo "M.2 SSD version:$ssd_v" >> $EMU_PARAM_DIR/fw_info
+fi
+
 wc -c $EMU_PARAM_DIR/fw_info | cut -f 1 -d " " > $EMU_PARAM_DIR/fw_info_filelen
 
 
