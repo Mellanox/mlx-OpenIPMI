@@ -32,16 +32,16 @@ fi
 # times before an hour has passed and we can update
 # the desired FRUs. 0x4b0 is the hex for 1200.
 fru_timer=0x4b0
-if [ ! -s $EMU_PARAM_DIR/ipmb_update_timer ]; then
-         echo $fru_timer > $EMU_PARAM_DIR/ipmb_update_timer
+if [ ! -s /tmp/ipmb_update_timer ]; then
+         echo $fru_timer > /tmp/ipmb_update_timer
          t=$fru_timer
 else
-         t=$(cat $EMU_PARAM_DIR/ipmb_update_timer)
+         t=$(cat /tmp/ipmb_update_timer)
          if [ "$t" = "0x000" ]; then
-                 echo $fru_timer > $EMU_PARAM_DIR/ipmb_update_timer
+                 echo $fru_timer > /tmp/ipmb_update_timer
          else
                 m=$(($t - 1))
-                printf "0x%03X\n" $m > $EMU_PARAM_DIR/ipmb_update_timer
+                printf "0x%03X\n" $m > /tmp/ipmb_update_timer
          fi
 fi
 
@@ -666,7 +666,7 @@ if [ "$t" = "$fru_timer" ]; then
 	sed -i '/DELETE AT START/Q' $EMU_FILE_PATH
 	echo "#DELETE AT START" >> $EMU_FILE_PATH
 
-	echo "mc_add_fru_data 0x30 0 6 file 0 \"$EMU_PARAM_DIR/ipmb_update_timer\"" >> $EMU_FILE_PATH
+	echo "mc_add_fru_data 0x30 0 6 file 0 \"/tmp/ipmb_update_timer\"" >> $EMU_FILE_PATH
 
 	add_fru "fw_info" 1
 	add_fru "nic_pci_dev_info" 2
