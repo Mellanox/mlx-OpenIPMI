@@ -92,8 +92,15 @@ if [ "$i2cbus" != "NONE" ]; then
 		modprobe ipmi_devintf
 	fi
 	if [ ! "$(lsmod | grep ipmb_host)" ]; then
-		modprobe ipmb_host slave_add=$IPMB_HOST_CLIENTADDR
-		echo ipmb-host $IPMB_HOST_ADD > $I2C_NEW_DEV
+		if [ "$bffamily" = "BlueSphere" ]; then
+			if [ ! "$t" = "$fru_timer" ] && [ $(( $t % 60 )) -eq 0 ]; then
+				modprobe ipmb_host slave_add=$IPMB_HOST_CLIENTADDR
+				echo ipmb-host $IPMB_HOST_ADD > $I2C_NEW_DEV
+			fi
+		else
+			modprobe ipmb_host slave_add=$IPMB_HOST_CLIENTADDR
+			echo ipmb-host $IPMB_HOST_ADD > $I2C_NEW_DEV
+		fi
 	fi
 fi #support_ipmb
 
