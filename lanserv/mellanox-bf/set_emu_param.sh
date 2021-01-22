@@ -200,8 +200,10 @@ get_connectx_net_info() {
 		echo "LAN interface: $eth" >> $EMU_PARAM_DIR/eth_hw_counters
 	fi
 
-	cd /sys/class/infiniband/mlx5_$1/ports/1/hw_counters
-	grep '' * >> $EMU_PARAM_DIR/eth_hw_counters
+	if [ -d /sys/class/infiniband/mlx5_$1/ports/1/hw_counters ]; then
+		cd /sys/class/infiniband/mlx5_$1/ports/1/hw_counters
+		grep '' * >> $EMU_PARAM_DIR/eth_hw_counters
+	fi
 
 	echo "LAN Interface:" > $EMU_PARAM_DIR/eth$1
 	ifconfig $eth >> $EMU_PARAM_DIR/eth$1 2>/dev/null
@@ -406,6 +408,8 @@ if [ ! -s $EMU_PARAM_DIR/eth_bdfs.txt ] && [ ! -s $EMU_PARAM_DIR/ib_bdfs.txt ]; 
 else
 	bdf_eth=$(head -n 1 $EMU_PARAM_DIR/eth_bdfs.txt)
 	bdf_ib=$(head -n 1 $EMU_PARAM_DIR/ib_bdfs.txt)
+	p0_changed=0
+	p1_changed=0
 
 	lspci -n -v -m -s $bdf_eth > $EMU_PARAM_DIR/nic_pci_dev_info 2>/dev/null
 	lspci -n -v -m -s $bdf_ib >> $EMU_PARAM_DIR/nic_pci_dev_info 2>/dev/null
@@ -416,9 +420,15 @@ else
 			func=$(echo $bdf | cut -f 1 -d " " | cut -f 2 -d ".")
 
 			if [ "$link_status" = "up" ]; then
-				echo 1 > $EMU_PARAM_DIR/p$func"_link"
+				if [ ! -f $EMU_PARAM_DIR/p$func"_link" ] || [ $(grep 2 $EMU_PARAM_DIR/p$func"_link") ]; then
+					eval "p${func}_changed=1"
+					echo 1 > $EMU_PARAM_DIR/p$func"_link"
+				fi
 			else
-				echo 2 > $EMU_PARAM_DIR/p$func"_link"
+				if [ ! -f $EMU_PARAM_DIR/p$func"_link" ] || [ $(grep 1 $EMU_PARAM_DIR/p$func"_link") ]; then
+					eval "p${func}_changed=1"
+					echo 2 > $EMU_PARAM_DIR/p$func"_link"
+				fi
 			fi
 		done <$EMU_PARAM_DIR/eth_bdfs.txt
 	fi
@@ -429,9 +439,15 @@ else
 			link_status=$(cat /sys/class/net/ib*/operstate)
 
 			if [ "$link_status" = "up" ]; then
-				echo 1 > $EMU_PARAM_DIR/p$func"_link"
+				if [ ! -f $EMU_PARAM_DIR/p$func"_link" ] || [ $(grep 2 $EMU_PARAM_DIR/p$func"_link") ]; then
+					eval "p${func}_changed=1"
+					echo 1 > $EMU_PARAM_DIR/p$func"_link"
+				fi
 			else
-				echo 2 > $EMU_PARAM_DIR/p$func"_link"
+				if [ ! -f $EMU_PARAM_DIR/p$func"_link" ] || [ $(grep 1 $EMU_PARAM_DIR/p$func"_link") ]; then
+					eval "p${func}_changed=1"
+					echo 2 > $EMU_PARAM_DIR/p$func"_link"
+				fi
 			fi
 		done <$EMU_PARAM_DIR/ib_bdfs.txt
 	fi
@@ -506,60 +522,64 @@ wc -c $EMU_PARAM_DIR/fw_info | cut -f 1 -d " " > $EMU_PARAM_DIR/fw_info_filelen
 ########################################################################
 #
 # If a port is not connected or if its temperature is reported as
-# "N/A" by FW, then the ipmitool command will show a value of -128 deg.
-# This is the equivalent of an invalid temperature reading.
+# "N/A" by FW, then the ipmitool command will display "no reading".
 # The mlxcables command reports a temperature as N/A if the cable is not
 # an optics cable with a capacity of 25G or 100G.
-#
+# Only try to detect the cables via "mst cable add" if the link status
+# has changed.
 
-mst cable add
-
+if [ "$p0_changed" = "1" ] || [ "$p1_changed" = "1" ]; then
+	mst cable add
+fi
 if [ -f /dev/mst/*cable_0 ]; then
 	cable_0=$(ls /dev/mst/*cable_0 | cut -f 4 -d "/")
-else
-	cable_0=""
-fi
-
-if [ -f /dev/mst/*cable_1 ]; then
-	cable_1=$(ls /dev/mst/*cable_1 | cut -f 4 -d "/")
-else
-	cable_1=""
-fi
-
-if [ $cable_0 ]; then
 
 	### Get the temperature for QSFP port0 ###
 	get_qsfp_temp $cable_0 "p0_temp"
 
-	#### Get QSFP EEPROM data ###
-	get_qsfp_eeprom_data $cable_0 "qsfp0_eeprom"
-
+	# Only update the qsfp eeprom fru if the link status changed to up
+	if [ "$p0_changed" = "1" ]; then
+		get_qsfp_eeprom_data $cable_0 "qsfp0_eeprom"
+	fi
 else
 	remove_sensor "p0_temp"
-	echo 0 > $EMU_PARAM_DIR/qsfp0_eeprom_filelen
+	echo "QSFP0 EEPROM not detected" > $EMU_PARAM_DIR/qsfp0_eeprom
+	truncate -s 256 $EMU_PARAM_DIR/qsfp0_eeprom
 fi
 
-if [ $cable_1 ]; then
+if [ -f /dev/mst/*cable_1 ]; then
+	cable_1=$(ls /dev/mst/*cable_1 | cut -f 4 -d "/")
 
 	### Get the temperature for QSFP port1 ###
 	get_qsfp_temp $cable_1 "p1_temp"
 
-	#### Get QSFP EEPROM data ###
-	get_qsfp_eeprom_data $cable_1 "qsfp1_eeprom"
-
+	# Only update the qsfp eeprom fru if the link status changed to up
+	if [ "$p1_changed" = "1" ]; then
+		get_qsfp_eeprom_data $cable_1 "qsfp1_eeprom"
+	fi
 else
 	remove_sensor "p1_temp"
-	echo 0 > $EMU_PARAM_DIR/qsfp1_eeprom_filelen
+	echo "QSFP1 EEPROM not detected" > $EMU_PARAM_DIR/qsfp1_eeprom
+	truncate -s 256 $EMU_PARAM_DIR/qsfp1_eeprom
 fi
 
+
+###################
+# DIMMs CE and UE #
+###################
 # add trailing spaces to each line so that the dimms_ce_ue FRU can be updated
 # when the number of errors increases.
+
 edac-util -rfull > /tmp/dimms_ce_ue
 awk '{printf "%-100s\n", $0}' /tmp/dimms_ce_ue > $EMU_PARAM_DIR/dimms_ce_ue
 
 
+###################################
+# Create ConnectX interfaces FRUs #
+###################################
 # Update eth0 and eth1 files every minute
 # 1 mn = 60 sec = 3 sec * 20
+
 if [ $(( $t % 20 )) -eq 0 ]; then
 	# Get 100G network interfaces information
 	get_connectx_net_info "0"
@@ -693,6 +713,8 @@ if [ "$t" = "$fru_timer" ]; then
 	wc -c $EMU_PARAM_DIR/eth0 | cut -f 1 -d " " > $EMU_PARAM_DIR/eth0_filelen
 	wc -c $EMU_PARAM_DIR/eth1 | cut -f 1 -d " " > $EMU_PARAM_DIR/eth1_filelen
 	wc -c $EMU_PARAM_DIR/eth_hw_counters | cut -f 1 -d " " > $EMU_PARAM_DIR/eth_hw_counters_filelen
+	wc -c $EMU_PARAM_DIR/qsfp0_eeprom | cut -f 1 -d " " > $EMU_PARAM_DIR/qsfp0_eeprom_filelen
+	wc -c $EMU_PARAM_DIR/qsfp1_eeprom | cut -f 1 -d " " > $EMU_PARAM_DIR/qsfp1_eeprom_filelen
 
 	add_fru "emmc_info" 8
 	add_fru "qsfp0_eeprom" 9
