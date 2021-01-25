@@ -218,7 +218,7 @@ get_connectx_net_info() {
 	isdhcp=false
 
 	# Check if IPv4 address is assigned
-	ifconfig $eth | grep "inet addr:"
+	ifconfig $eth | grep "inet "
 	if [ $? -eq 0 ]; then
 
 		# On Yocto and Ubuntu
@@ -244,7 +244,7 @@ get_connectx_net_info() {
 	isdhcp=false
 
 	# Check if IPv6 address is assigned and is not a link local address
-	ifconfig $eth | grep "inet6 addr:" | grep -v "fe80"
+	ifconfig $eth | grep "inet6 " | grep -v "fe80"
 	if [ $? -eq 0 ]; then
 
 		# On Yocto and Ubuntu
