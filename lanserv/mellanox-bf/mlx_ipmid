@@ -1,0 +1,8 @@
+/var/log/mlx_ipmid/mlx_ipmid.log {
+        size 100k
+        rotate 4
+        missingok
+        nodateext
+        compress
+        copytruncate
+}
