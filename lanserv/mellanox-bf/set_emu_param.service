@@ -5,8 +5,8 @@ After=oneshot_emu_param.service
 [Service]
 EnvironmentFile=/etc/ipmi/progconf
 ExecStart=/bin/bash -c '/usr/bin/poll_set_emu_param.sh ${LOOP_PERIOD} ${BF_FAMILY} ${SUPPORT_IPMB} ${OOB_IP} ${EXTERNAL_DDR}'
-StandardOutput=append:/var/log/set_emu_param.log
-StandardError=append:/var/log/set_emu_param.log
+StandardOutput=append:/var/log/set_emu_param/set_emu_param.log
+StandardError=append:/var/log/set_emu_param/set_emu_param.log
 
 [Install]
 WantedBy=multi-user.target
