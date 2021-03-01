@@ -66,7 +66,7 @@ external_ddr=$4
 
 if [ "$bffamily" = "Bluewhale" ]; then
 	i2cbus=2
-elif [ "$bffamily" = "BlueSphere" ]; then
+elif [ "$bffamily" = "BlueSphere" ] || [ "$bffamily" = "PRIS" ]; then
 	i2cbus=1
 else
 	i2cbus=$support_ipmb
@@ -92,7 +92,7 @@ if [ "$i2cbus" != "NONE" ]; then
 		modprobe ipmi_devintf
 	fi
 	if [ ! "$(lsmod | grep ipmb_host)" ]; then
-		if [ "$bffamily" = "BlueSphere" ]; then
+		if [ "$bffamily" = "BlueSphere" ] || [ "$bffamily" = "PRIS" ]; then
 			if [ ! "$t" = "$fru_timer" ] && [ $(( $t % 60 )) -eq 0 ]; then
 				modprobe ipmb_host slave_add=$IPMB_HOST_CLIENTADDR
 				echo ipmb-host $IPMB_HOST_ADD > $I2C_NEW_DEV
