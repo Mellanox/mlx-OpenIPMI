@@ -3,3 +3,5 @@ lib/systemd/system
 etc/ipmi
 var/ipmi_sim/mellanox
 etc/default
+var/log/set_emu_param
+var/log/mlx_ipmid
