@@ -96,6 +96,10 @@ make %{?_smp_mflags}
 /lib/systemd/system/oneshot_emu_param.service
 /lib/systemd/system/set_emu_param.service
 /lib/systemd/system/mlx_ipmid.service
+/var/log/mlx_ipmid
+/var/log/set_emu_param
+/etc/logrotate.d/mlx_ipmid
+/etc/logrotate.d/set_emu_param
 
 %changelog
 * Wed Jan 23 2019 Asmaa Mnebhi <asmaa@mellanox.com> - 0.1-1

@@ -8,3 +8,5 @@ usr/share/man/man5/*.5
 usr/share/man/man7/ipmi_cmdlang.7
 usr/share/man/man7/openipmi_conparms.7
 usr/share/man/man8/ipmilan.8
+/etc/logrotate.d/mlx_ipmid
+/etc/logrotate.d/set_emu_param
