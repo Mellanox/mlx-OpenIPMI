@@ -438,7 +438,7 @@ else
 	if [ -s $EMU_PARAM_DIR/ib_bdfs.txt ]; then
 		while read bdf; do
 			func=$(echo $bdf | cut -f 1 -d " " | cut -f 2 -d ".")
-			link_status=$(cat /sys/class/net/ib*/operstate)
+			link_status=$(cat /sys/class/net/ib*$func/operstate)
 
 			if [ "$link_status" = "up" ]; then
 				if [ ! -f $EMU_PARAM_DIR/p$func"_link" ] || [ $(grep 2 $EMU_PARAM_DIR/p$func"_link") ]; then
