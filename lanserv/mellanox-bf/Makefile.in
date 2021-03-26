@@ -512,8 +512,11 @@ install-data-local:
 	$(INSTALL) -m 755 -d "$(DESTDIR)$(localstatedir)/log/mlx_ipmid/"; \
 	$(INSTALL) -m 755 -d "$(DESTDIR)$(localstatedir)/log/set_emu_param/"; \
 	$(INSTALL) -m 755 -d "$(DESTDIR)$(sysconfdir)/logrotate.d/"; \
+	$(INSTALL) -m 755 -d "$(DESTDIR)$(sysconfdir)/rsyslog.d/"; \
 	$(INSTALL) -m 644 $(srcdir)/mlx_ipmid "$(DESTDIR)$(sysconfdir)/logrotate.d/mlx_ipmid"; \
-	$(INSTALL) -m 644 $(srcdir)/set_emu_param "$(DESTDIR)$(sysconfdir)/logrotate.d/set_emu_param";
+	$(INSTALL) -m 644 $(srcdir)/set_emu_param "$(DESTDIR)$(sysconfdir)/logrotate.d/set_emu_param"; \
+	$(INSTALL) -m 644 $(srcdir)/mlx_ipmid.conf "$(DESTDIR)$(sysconfdir)/rsyslog.d/mlx_ipmid.conf"; \
+	$(INSTALL) -m 644 $(srcdir)/set_emu_param.conf "$(DESTDIR)$(sysconfdir)/rsyslog.d/set_emu_param.conf";
 
 uninstall-local:
 	-rm -f "$(DESTDIR)/lib/systemd/system/oneshot_emu_param.service"
@@ -527,6 +530,8 @@ uninstall-local:
 	-rm -f "$(DESTDIR)/lib/systemd/system/mlx_ipmid.service"
 	-rm -f "$(DESTDIR)$(sysconfdir)/logrotate.d/mlx_ipmid"
 	-rm -f "$(DESTDIR)$(sysconfdir)/logrotate.d/set_emu_param"
+	-rm -f "$(DESTDIR)$(sysconfdir)/rsyslog.d/mlx_ipmid.conf"
+	-rm -f "$(DESTDIR)$(sysconfdir)/rsyslog.d/set_emu_param.conf"
 	-rmdir "$(DESTDIR)$(localstatedir)/log/mlx_ipmid/"
 	-rmdir "$(DESTDIR)$(localstatedir)/log/set_emu_param/"
 	-rmdir "$(DESTDIR)$(sysconfdir)/ipmi" 2>/dev/null

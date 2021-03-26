@@ -100,6 +100,8 @@ make %{?_smp_mflags}
 /var/log/set_emu_param
 /etc/logrotate.d/mlx_ipmid
 /etc/logrotate.d/set_emu_param
+/etc/rsyslog.d/mlx_ipmid.conf
+/etc/rsyslog.d/set_emu_param.conf
 
 %changelog
 * Wed Jan 23 2019 Asmaa Mnebhi <asmaa@mellanox.com> - 0.1-1

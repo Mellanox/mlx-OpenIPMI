@@ -10,3 +10,5 @@ usr/share/man/man7/openipmi_conparms.7
 usr/share/man/man8/ipmilan.8
 /etc/logrotate.d/mlx_ipmid
 /etc/logrotate.d/set_emu_param
+/etc/rsyslog.d/mlx_ipmid.conf
+/etc/rsyslog.d/set_emu_param.conf
