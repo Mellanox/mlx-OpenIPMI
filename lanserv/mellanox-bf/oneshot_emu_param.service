@@ -1,5 +1,6 @@
 [Unit]
 Description=Collect about BlueField's sensors and FRUs once
+After=rasdaemon.service
 
 [Service]
 Type=oneshot
