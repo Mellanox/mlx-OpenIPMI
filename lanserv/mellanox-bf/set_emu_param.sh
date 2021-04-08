@@ -572,7 +572,7 @@ fi
 # add trailing spaces to each line so that the dimms_ce_ue FRU can be updated
 # when the number of errors increases.
 
-edac-util -rfull > /tmp/dimms_ce_ue
+ras-mc-ctl --error-count > /tmp/dimms_ce_ue
 awk '{printf "%-100s\n", $0}' /tmp/dimms_ce_ue > $EMU_PARAM_DIR/dimms_ce_ue
 
 
