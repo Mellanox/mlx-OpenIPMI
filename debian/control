@@ -2,6 +2,7 @@ Source: mlx-openipmi
 Section: admin
 Priority: optional
 Maintainer: Noël Köthe <noel@debian.org>
+Depends: rasdaemon
 Build-Depends: debhelper (>> 11.0.0), libsnmp-dev, libpopt-dev, libncurses5-dev, chrpath, libssl-dev, dh-systemd
 Standards-Version: 4.1.4
 Homepage: http://openipmi.sourceforge.net/
