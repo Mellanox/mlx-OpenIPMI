@@ -193,7 +193,10 @@ get_connectx_net_info() {
 	# the SNIC, the connectX interfaces are renamed p0 and p1
 	eth=$(ifconfig -a | grep "enp.*f$1" | cut -f 1 -d " " | cut -f 1 -d ":")
 	if [ -z $eth ]; then
-		eth="p$1"
+		eth=$(ifconfig -a | grep "ibp.*f$1" | cut -f 1 -d " " | cut -f 1 -d ":")
+		if [ -z $eth ]; then
+			eth="p$1"
+		fi
 	fi
 
 	if [ "$1" = "0" ]; then
