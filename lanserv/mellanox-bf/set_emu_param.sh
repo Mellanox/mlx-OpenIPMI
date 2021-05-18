@@ -410,8 +410,8 @@ if [ ! -s $EMU_PARAM_DIR/eth_bdfs.txt ] && [ ! -s $EMU_PARAM_DIR/ib_bdfs.txt ]; 
 	Unable to get NIC PCI device info since the network ports are not configured.
 	EOF
 
-	echo 2 > $EMU_PARAM_DIR/p0_link
-	echo 2 > $EMU_PARAM_DIR/p1_link
+	echo 2 > /tmp/p0_link
+	echo 2 > /tmp/p1_link
 else
 	bdf_eth=$(head -n 1 $EMU_PARAM_DIR/eth_bdfs.txt)
 	bdf_ib=$(head -n 1 $EMU_PARAM_DIR/ib_bdfs.txt)
@@ -427,14 +427,14 @@ else
 			func=$(echo $bdf | cut -f 1 -d " " | cut -f 2 -d ".")
 
 			if [ "$link_status" = "up" ]; then
-				if [ ! -f $EMU_PARAM_DIR/p$func"_link" ] || [ $(grep 2 $EMU_PARAM_DIR/p$func"_link") ]; then
+				if [ ! -f /tmp/p$func"_link" ] || [ $(grep 2 /tmp/p$func"_link") ]; then
 					eval "p${func}_changed=1"
-					echo 1 > $EMU_PARAM_DIR/p$func"_link"
+					echo 1 > /tmp/p$func"_link"
 				fi
 			else
-				if [ ! -f $EMU_PARAM_DIR/p$func"_link" ] || [ $(grep 1 $EMU_PARAM_DIR/p$func"_link") ]; then
+				if [ ! -f /tmp/p$func"_link" ] || [ $(grep 1 /tmp/p$func"_link") ]; then
 					eval "p${func}_changed=1"
-					echo 2 > $EMU_PARAM_DIR/p$func"_link"
+					echo 2 > /tmp/p$func"_link"
 				fi
 			fi
 		done <$EMU_PARAM_DIR/eth_bdfs.txt
@@ -446,14 +446,14 @@ else
 			link_status=$(cat /sys/class/net/ib*$func/operstate)
 
 			if [ "$link_status" = "up" ]; then
-				if [ ! -f $EMU_PARAM_DIR/p$func"_link" ] || [ $(grep 2 $EMU_PARAM_DIR/p$func"_link") ]; then
+				if [ ! -f /tmp/p$func"_link" ] || [ $(grep 2 /tmp/p$func"_link") ]; then
 					eval "p${func}_changed=1"
-					echo 1 > $EMU_PARAM_DIR/p$func"_link"
+					echo 1 > /tmp/p$func"_link"
 				fi
 			else
-				if [ ! -f $EMU_PARAM_DIR/p$func"_link" ] || [ $(grep 1 $EMU_PARAM_DIR/p$func"_link") ]; then
+				if [ ! -f /tmp/p$func"_link" ] || [ $(grep 1 /tmp/p$func"_link") ]; then
 					eval "p${func}_changed=1"
-					echo 2 > $EMU_PARAM_DIR/p$func"_link"
+					echo 2 > /tmp/p$func"_link"
 				fi
 			fi
 		done <$EMU_PARAM_DIR/ib_bdfs.txt

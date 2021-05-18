@@ -63,12 +63,12 @@ sensor_add 0x30 0 6 0x01 0x01	\
 # QSFP port 0 link status
 sensor_add 0x30 0 7 0x1b 0x6f	\
 	poll 5000		\
-	file "/var/emu_param/p0_link"
+	file "/tmp/p0_link"
 
 # QSFP port 1 link status
 sensor_add 0x30 0 8 0x1b 0x6f	\
 	poll 5000		\
-	file "/var/emu_param/p1_link"
+	file "/tmp/p1_link"
 
 ########## FRUs ##########
 
