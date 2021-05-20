@@ -3,3 +3,4 @@ EXTERNAL_DDR="NO"
 LOOP_PERIOD=3
 BF_FAMILY=$(/usr/bin/bffamily | tr -d '[:space:]')
 OOB_IP="0"
+FRU_TIMER=0x4b0

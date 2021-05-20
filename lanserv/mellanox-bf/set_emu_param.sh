@@ -20,31 +20,6 @@ if [ ! -s  $EMU_PARAM_DIR/ip_addresses ]; then
 	touch $EMU_PARAM_DIR/ip_addresses
 fi
 
-# This timer is used to update the FRUs
-# once every hour. It also informs the user
-# how much time is left before the next FRU
-# update.
-# This is needed in the case where customers
-# need to retrieve FRU data 16 or 32 bytes at
-# a time.
-# set_emu_param.service executes set_emu_param.sh
-# every 3s, so we need to execute that script 1200
-# times before an hour has passed and we can update
-# the desired FRUs. 0x4b0 is the hex for 1200.
-fru_timer=0x4b0
-if [ ! -s /tmp/ipmb_update_timer ]; then
-         echo $fru_timer > /tmp/ipmb_update_timer
-         t=$fru_timer
-else
-         t=$(cat /tmp/ipmb_update_timer)
-         if [ "$t" = "0x000" ]; then
-                 echo $fru_timer > /tmp/ipmb_update_timer
-         else
-                m=$(($t - 1))
-                printf "0x%03X\n" $m > /tmp/ipmb_update_timer
-         fi
-fi
-
 # By default, 0x30 is the BF slave address at which
 # the ipmb_dev_int device is registered.
 # By default, 0x11 is the BF slave address at which
@@ -63,6 +38,7 @@ bffamily=$1
 support_ipmb=$2
 oob_ip=$3
 external_ddr=$4
+fru_timer=$5
 
 if [ "$bffamily" = "Bluewhale" ]; then
 	i2cbus=2
@@ -97,7 +73,7 @@ if [ "$i2cbus" != "NONE" ]; then
 		if [ "$bffamily" = "BlueSphere" ] || [ "$bffamily" = "PRIS" ] ||
 		   [ "$bffamily" = "Camelantis" ] || [ "$bffamily" = "Aztlan" ] ||
 		   [ "$bffamily" = "Dell-Camelantis" ]; then
-			if [ ! "$t" = "$fru_timer" ] && [ $(( $t % 60 )) -eq 0 ]; then
+			if (( $fru_timer != 0x4b0 )) && [ $(( $fru_timer % 60 )) -eq 0 ]; then
 				modprobe ipmb_host slave_add=$IPMB_HOST_CLIENTADDR
 				echo ipmb-host $IPMB_HOST_ADD > $I2C_NEW_DEV
 			fi
@@ -587,7 +563,7 @@ awk '{printf "%-100s\n", $0}' /tmp/dimms_ce_ue > $EMU_PARAM_DIR/dimms_ce_ue
 # Update eth0 and eth1 files every minute
 # 1 mn = 60 sec = 3 sec * 20
 
-if [ $(( $t % 20 )) -eq 0 ]; then
+if [ $(( $fru_timer % 20 )) -eq 0 ]; then
 	# Get 100G network interfaces information
 	get_connectx_net_info "0"
 	get_connectx_net_info "1"
@@ -600,7 +576,7 @@ truncate -s 3000 $EMU_PARAM_DIR/eth_hw_counters
 # - The FRUs are not really susceptible to change unless the user makes changes directly to HW
 # - Some users need enough time to retrieve FRUs via ipmitool raw command.
 # So only update it once every hour.
-if [ "$t" = "$fru_timer" ]; then
+if (( $fru_timer == 0x4b0 )); then
 
 	###################################
 	#        Get the cpu info         #
@@ -692,8 +668,6 @@ if [ "$t" = "$fru_timer" ]; then
 
 	sed -i '/DELETE AT START/Q' $EMU_FILE_PATH
 	echo "#DELETE AT START" >> $EMU_FILE_PATH
-
-	echo "mc_add_fru_data 0x30 0 6 file 0 \"/tmp/ipmb_update_timer\"" >> $EMU_FILE_PATH
 
 	add_fru "fw_info" 1
 	add_fru "nic_pci_dev_info" 2

@@ -5,7 +5,7 @@ After=rasdaemon.service
 [Service]
 Type=oneshot
 EnvironmentFile=/etc/ipmi/progconf
-ExecStart=/bin/bash -c '/usr/bin/set_emu_param.sh ${BF_FAMILY} ${SUPPORT_IPMB} ${OOB_IP} ${EXTERNAL_DDR}'
+ExecStart=/bin/bash -c '/usr/bin/set_emu_param.sh ${BF_FAMILY} ${SUPPORT_IPMB} ${OOB_IP} ${EXTERNAL_DDR} ${FRU_TIMER}'
 
 [Install]
 WantedBy=multi-user.target

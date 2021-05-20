@@ -548,19 +548,6 @@ sdr type 2
 	id_string		"p1_link"
 endsdr
 
-# Timer for next FRU update
-sdr type 0x11
-	device_access_address	0x30
-	fru_device_address	0
-	logical_fru		1
-	lun			0
-	device_type		0x10
-	device_type_modifier	0
-	fru_entity_id		other
-	fru_entity_instance	1
-	id_string		"update_timer"
-endsdr
-
 # FW information
 sdr type 0x11
 	device_access_address	0x30
