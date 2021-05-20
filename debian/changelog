@@ -1,3 +1,9 @@
+mlx-openipmi (2.0.25-3) unstable; urgency=medium
+
+  * Update version number to 2.0.25-3
+
+ -- Asmaa Mnebhi <asmaa@nvidia.com>  Thu, 20 May 2021 15:07:40 +0100
+
 mlx-openipmi (2.0.25-2.2) unstable; urgency=medium
 
   * Mellanox specific patch file to support the IPMB interface and
