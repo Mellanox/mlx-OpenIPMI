@@ -28,7 +28,7 @@
 
 %{!?_name: %define _name mlx-OpenIPMI}
 %{!?_version: %define _version 2.0.25}
-%{!?_release: %define _release 0}
+%{!?_release: %define _release 3}
 
 Summary: %{_name} - Library interface to IPMI
 Name: %{_name}
@@ -105,5 +105,8 @@ make %{?_smp_mflags}
 /etc/rsyslog.d/set_emu_param.conf
 
 %changelog
-* Wed Jan 23 2019 Asmaa Mnebhi <asmaa@mellanox.com> - 0.1-1
+* Thu May 20 2021 Asmaa Mnebhi <asmaa@nvidia.com> - 2.0.25-3
+- Update version number to 2.0.25-3
+
+* Wed Jan 23 2019 Asmaa Mnebhi <asmaa@mellanox.com> - 2.0.25-0
 - First mlx-OpenIPMI-2.0.25 package
