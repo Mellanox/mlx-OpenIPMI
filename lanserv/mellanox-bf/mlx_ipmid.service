@@ -1,9 +1,11 @@
 [Unit]
 Description=ipmi daemon which creates a management controller on the Bluefield
-After=oneshot_emu_param.service
-Requires=oneshot_emu_param.service
+After=rasdaemon.service
+Before=set_emu_param.service
 
 [Service]
+EnvironmentFile=/etc/ipmi/progconf
+ExecStartPre=/bin/bash -c '/usr/bin/set_emu_param.sh ${BF_FAMILY} ${SUPPORT_IPMB} ${OOB_IP} ${EXTERNAL_DDR}'
 ExecStart=/usr/bin/ipmi_sim -c /etc/ipmi/mlx-bf.lan.conf -f /etc/ipmi/mlx-bf.emu -s /var
 Restart=always
 RestartSec=10

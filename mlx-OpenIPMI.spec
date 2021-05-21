@@ -94,7 +94,6 @@ make %{?_smp_mflags}
 /usr/lib64/pkgconfig/OpenIPMI*
 /etc/ipmi/*
 /var/ipmi_sim/mellanox/sdr.30.main
-/lib/systemd/system/oneshot_emu_param.service
 /lib/systemd/system/set_emu_param.service
 /lib/systemd/system/mlx_ipmid.service
 /var/log/mlx_ipmid

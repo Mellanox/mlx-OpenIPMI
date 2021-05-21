@@ -5,7 +5,6 @@ install-data-local:
 	$(INSTALL) -m 755 -d "$(DESTDIR)/lib/systemd/system/"; \
 	$(INSTALL) -m 755 $(srcdir)/set_emu_param.sh "$(DESTDIR)$(bindir)/"; \
 	$(INSTALL) -m 755 $(srcdir)/poll_set_emu_param.sh "$(DESTDIR)$(bindir)/"; \
-	$(INSTALL) -m 644 $(srcdir)/oneshot_emu_param.service "$(DESTDIR)/lib/systemd/system/"; \
 	$(INSTALL) -m 644 $(srcdir)/set_emu_param.service "$(DESTDIR)/lib/systemd/system/"; \
 	$(INSTALL) -m 644 $(srcdir)/sdr.30.main "$(DESTDIR)$(localstatedir)/ipmi_sim/mellanox/"; \
 	$(INSTALL) -m 644 $(srcdir)/mlx-bf.lan.conf "$(DESTDIR)$(sysconfdir)/ipmi/"; \
@@ -22,7 +21,6 @@ install-data-local:
 	$(INSTALL) -m 644 $(srcdir)/set_emu_param.conf "$(DESTDIR)$(sysconfdir)/rsyslog.d/set_emu_param.conf";
 
 uninstall-local:
-	-rm -f "$(DESTDIR)/lib/systemd/system/oneshot_emu_param.service"
 	-rm -f "$(DESTDIR)/lib/systemd/system/set_emu_param.service"
 	-rm -f "$(DESTDIR)$(bindir)/set_emu_param.sh"
 	-rm -f "$(DESTDIR)$(bindir)/poll_set_emu_param.sh"
