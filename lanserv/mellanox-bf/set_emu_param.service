@@ -1,6 +1,6 @@
 [Unit]
 Description=Collect information about BlueField's sensors and FRUs
-After=oneshot_emu_param.service
+After=mlx_ipmid.service
 
 [Service]
 EnvironmentFile=/etc/ipmi/progconf
