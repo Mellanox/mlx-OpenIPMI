@@ -470,58 +470,61 @@ rm -f $EMU_PARAM_DIR/ib_bdfs.txt
 #          Get FW info            #
 ###################################
 #
-# This directory exists for both infiniband and ethernet.
-# The reason for that is RoCE which implements the infiniband protocol
+# /sys/class/infiniband/mlx* exists for both infiniband and ethernet.
+# The reason for that is RoCE, which implements the infiniband protocol
 # (RDMA), with ethernet as the link layer instead of IB.
 #
-if [ -d /sys/class/infiniband/mlx*_0 ]; then
-	port=0
-elif [ -d /sys/class/infiniband/mlx*_1 ]; then
-	port=1
-else
-	port=-1
-fi
-
-if [ "$port" = "-1" ]; then
+get_fw_info() {
 	cat <<- EOF > $EMU_PARAM_DIR/fw_info
-	Unable to get fw info since the network ports are not configured.
+	$(/usr/bin/bfver | sed '1d')
+	BlueField OFED Version: $(ofed_info -s | sed 's/.$//')
 	EOF
-else
+
 	if [ $bdf_eth ]; then
-		bdf=$bdf_eth
+		cat <<- EOF >> $EMU_PARAM_DIR/fw_info
+		vpd info:
+		$(lspci -vvv -s $bdf_eth | sed -n "/Vital/,/End/p")
+		EOF
 	elif [ $bdf_ib ]; then
-		bdf=$bdf_ib
+		cat <<- EOF >> $EMU_PARAM_DIR/fw_info
+		vpd info:
+		$(lspci -vvv -s $bdf_ib | sed -n "/Vital/,/End/p")
+		EOF
 	else
-		bdf=NULL
+		echo "Unable to get VPD info" >> $EMU_PARAM_DIR/fw_info
 	fi
 
-	if [ "$bdf" != "NULL" ]; then
-		cat <<- EOF > $EMU_PARAM_DIR/fw_info
-		$(/usr/bin/bfver | sed '1d')
-		BlueField OFED Version: $(ofed_info -s | sed 's/.$//')
+	if [ -d /sys/class/infiniband/mlx*_0 ]; then
+		port=0
+	elif [ -d /sys/class/infiniband/mlx*_1 ]; then
+		port=1
+	else
+		port=-1
+	fi
+
+	if [ "$port" = "-1" ]; then
+		cat <<- EOF >> $EMU_PARAM_DIR/fw_info
+		Unable to get connectx fw info since the network ports are not configured.
+		EOF
+	else
+		cat <<- EOF >> $EMU_PARAM_DIR/fw_info
 		connectx_fw_ver: $(cat /sys/class/infiniband/mlx*_$port/fw_ver)
 		board_id: $(cat /sys/class/infiniband/mlx*_$port/board_id)
 		node_guid: $(cat /sys/class/infiniband/mlx*_$port/node_guid)
 		sys_image_guid: $(cat /sys/class/infiniband/mlx*_$port/sys_image_guid)
-		vpd info:
-		$(lspci -vvv -s $bdf | sed -n "/Vital/,/End/p")
-		EOF
-	else
-		cat <<- EOF > $EMU_PARAM_DIR/fw_info
-		Unable to get fw info since the network ports are not configured.
 		EOF
 	fi
-fi
 
-if [ "$bffamily" = "BlueSphere" ]; then
-	ssd_v=$(lspci -vv  | grep "Non-Volatile memory controller" | cut -d ":" -f 3)
-	if [ -z "$ssd_v" ]; then
-		ssd_v="No SSD found"
+	if [ "$bffamily" = "BlueSphere" ]; then
+		ssd_v=$(lspci -vv  | grep "Non-Volatile memory controller" | cut -d ":" -f 3)
+		if [ -z "$ssd_v" ]; then
+			ssd_v="No SSD found"
+		fi
+		echo "M.2 SSD version:$ssd_v" >> $EMU_PARAM_DIR/fw_info
 	fi
-	echo "M.2 SSD version:$ssd_v" >> $EMU_PARAM_DIR/fw_info
-fi
 
-wc -c $EMU_PARAM_DIR/fw_info | cut -f 1 -d " " > $EMU_PARAM_DIR/fw_info_filelen
+	wc -c $EMU_PARAM_DIR/fw_info | cut -f 1 -d " " > $EMU_PARAM_DIR/fw_info_filelen
+}
 
 
 ########################################################################
@@ -601,6 +604,12 @@ truncate -s 3000 $EMU_PARAM_DIR/eth_hw_counters
 # - Some users need enough time to retrieve FRUs via ipmitool raw command.
 # So only update it once every hour.
 if [ "$t" = "$fru_timer" ]; then
+
+	###################################
+	#        Get the fw info          #
+	###################################
+	get_fw_info
+
 
 	###################################
 	#        Get the cpu info         #
