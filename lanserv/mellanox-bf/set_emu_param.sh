@@ -20,6 +20,12 @@ if [ ! -s  $EMU_PARAM_DIR/ip_addresses ]; then
 	touch $EMU_PARAM_DIR/ip_addresses
 fi
 
+bffamily=$1
+support_ipmb=$2
+oob_ip=$3
+external_ddr=$4
+loop_period=$5
+
 # This timer is used to update the FRUs
 # once every hour. It also informs the user
 # how much time is left before the next FRU
@@ -28,10 +34,10 @@ fi
 # need to retrieve FRU data 16 or 32 bytes at
 # a time.
 # set_emu_param.service executes set_emu_param.sh
-# every 3s, so we need to execute that script 1200
-# times before an hour has passed and we can update
-# the desired FRUs. 0x4b0 is the hex for 1200.
-fru_timer=0x4b0
+# every $loop_period, so we need to execute this
+# script $fru_timer times before an hour has
+# passed and we can update the desired FRUs.
+fru_timer=$((3600 / $loop_period))
 if [ ! -s /tmp/ipmb_update_timer ]; then
          echo $fru_timer > /tmp/ipmb_update_timer
          t=$fru_timer
@@ -44,6 +50,9 @@ else
                 printf "0x%03X\n" $m > /tmp/ipmb_update_timer
          fi
 fi
+
+# current time in seconds
+curr_time=$((( $fru_timer - $t) * $loop_period ))
 
 # By default, 0x30 is the BF slave address at which
 # the ipmb_dev_int device is registered.
@@ -58,11 +67,6 @@ IPMB_HOST_ADD=0x1011
 # By default, the ipmb_host driver communicates with
 # a client at address 0x10.
 IPMB_HOST_CLIENTADDR=0x10
-
-bffamily=$1
-support_ipmb=$2
-oob_ip=$3
-external_ddr=$4
 
 if [ "$bffamily" = "Bluewhale" ]; then
 	i2cbus=2
@@ -99,7 +103,9 @@ if [ "$i2cbus" != "NONE" ]; then
 		   [ "$bffamily" = "Camelantis" ] || [ "$bffamily" = "Aztlan" ] ||
 		   [ "$bffamily" = "Dell-Camelantis" ] || [ "$bffamily" = "Roy" ] ||
 		   [ "$bffamily" = "El-Dorado" ]; then
-			if [ ! "$t" = "$fru_timer" ] && [ $(( $t % 60 )) -eq 0 ]; then
+			# Load the driver 2mn after boot to give the BMC time
+			# to get ready for IPMB transactions.
+			if [ "$curr_time" -ge 120 ]; then
 				modprobe ipmb_host slave_add=$IPMB_HOST_CLIENTADDR
 				echo ipmb-host $IPMB_HOST_ADD > $I2C_NEW_DEV
 			fi
@@ -589,10 +595,9 @@ awk '{printf "%-100s\n", $0}' /tmp/dimms_ce_ue > $EMU_PARAM_DIR/dimms_ce_ue
 ###################################
 # Create ConnectX interfaces FRUs #
 ###################################
-# Update eth0 and eth1 files every minute
-# 1 mn = 60 sec = 3 sec * 20
+# Update eth0 and eth1 files every 60 seconds
 
-if [ $(( $t % 20 )) -eq 0 ]; then
+if [ $(( $curr_time % 60 )) -eq 0 ]; then
 	# Get 100G network interfaces information
 	get_connectx_net_info "0"
 	get_connectx_net_info "1"
