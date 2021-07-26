@@ -201,9 +201,10 @@ get_connectx_net_info() {
 	# In the BlueWhale and other similar designs,
 	# udev renames the interfaces to enp*f* while on
 	# the SNIC, the connectX interfaces are renamed p0 and p1
-	eth=$(ifconfig -a | grep "enp.*f$1" | cut -f 1 -d " " | cut -f 1 -d ":")
+	# Make sure to parse out the VLAN interfaces as well. For ex: enp3s0f0np0.100
+	eth=$(ifconfig -a | grep "enp.*f$1" | cut -f 1 -d " " | cut -f 1 -d ":" | head -1 | cut -f 1 -d ".")
 	if [ -z $eth ]; then
-		eth=$(ifconfig -a | grep "ibp.*f$1" | cut -f 1 -d " " | cut -f 1 -d ":")
+		eth=$(ifconfig -a | grep "ibp.*f$1" | cut -f 1 -d " " | cut -f 1 -d ":" | head -1 | cut -f 1 -d ".")
 		if [ -z $eth ]; then
 			eth="p$1"
 		fi
