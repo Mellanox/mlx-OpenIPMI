@@ -1,4 +1,4 @@
-/var/log/mlx_ipmid/mlx_ipmid.log {
+/run/log/mlx_ipmid.log {
         size 100k
         rotate 4
         missingok

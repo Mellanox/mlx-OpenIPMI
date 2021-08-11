@@ -96,8 +96,6 @@ make %{?_smp_mflags}
 /var/ipmi_sim/mellanox/sdr.30.main
 /lib/systemd/system/set_emu_param.service
 /lib/systemd/system/mlx_ipmid.service
-/var/log/mlx_ipmid
-/var/log/set_emu_param
 /etc/logrotate.d/mlx_ipmid
 /etc/logrotate.d/set_emu_param
 /etc/rsyslog.d/mlx_ipmid.conf

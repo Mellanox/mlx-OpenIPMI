@@ -10,8 +10,8 @@ ExecStart=/usr/bin/ipmi_sim -c /etc/ipmi/mlx-bf.lan.conf -f /etc/ipmi/mlx-bf.emu
 Restart=always
 RestartSec=10
 TimeoutSec=60
-StandardOutput=append:/var/log/mlx_ipmid/mlx_ipmid.log
-StandardError=append:/var/log/mlx_ipmid/mlx_ipmid.log
+StandardOutput=append:/run/log/mlx_ipmid.log
+StandardError=append:/run/log/mlx_ipmid.log
 
 [Install]
 WantedBy=multi-user.target
