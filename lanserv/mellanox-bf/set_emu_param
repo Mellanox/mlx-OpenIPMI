@@ -1,4 +1,4 @@
-/var/log/set_emu_param/set_emu_param.log {
+/run/log/set_emu_param.log {
         size 100k
         rotate 4
         missingok
