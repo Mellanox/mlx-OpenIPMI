@@ -27,37 +27,37 @@ sel_enable 0x30 1000 0x0a
 # sensor_add mc-addr LUN sensor-num sensor-type event-reading-code
 sensor_add 0x30 0 0 0x01 0x01	\
 	poll 5000		\
-	file "/var/emu_param/bluefield_temp"
+	file "/run/emu_param/bluefield_temp"
 
 # Add DIMM0_0 temperature sensor
 sensor_add 0x30 0 1 0x01 0x01	\
 	poll 5000		\
-	file "/var/emu_param/ddr0_0_temp"
+	file "/run/emu_param/ddr0_0_temp"
 
 # Add DIMM0_1 temperature sensor
 sensor_add 0x30 0 2 0x01 0x01	\
 	poll 5000		\
-	file "/var/emu_param/ddr0_1_temp"
+	file "/run/emu_param/ddr0_1_temp"
 
 # Add DIMM1_0 temperature sensor
 sensor_add 0x30 0 3 0x01 0x01	\
 	poll 5000		\
-	file "/var/emu_param/ddr1_0_temp"
+	file "/run/emu_param/ddr1_0_temp"
 
 # Add DIMM1_1 temperature sensor
 sensor_add 0x30 0 4 0x01 0x01	\
 	poll 5000		\
-	file "/var/emu_param/ddr1_1_temp"
+	file "/run/emu_param/ddr1_1_temp"
 
 # Add QSFP port 0 temperature sensor
 sensor_add 0x30 0 5 0x01 0x01	\
 	poll 5000		\
-	file "/var/emu_param/p0_temp" sub=-128
+	file "/run/emu_param/p0_temp" sub=-128
 
 # Add QSFP port 1 temperature sensor
 sensor_add 0x30 0 6 0x01 0x01	\
 	poll 5000		\
-	file "/var/emu_param/p1_temp" sub=-128
+	file "/run/emu_param/p1_temp" sub=-128
 
 # Add sensor for detecting whether QSFP links are up or down
 # QSFP port 0 link status
@@ -92,7 +92,7 @@ sensor_add 0x30 0 8 0x1b 0x6f	\
 # If the BMC address is 11.22.33.44, it needs to be passed
 # as shown above to keep the 61 byte file size.
 #
-mc_add_fru_data 0x30 11 61 file 0 "/var/emu_param/ip_addresses"
+mc_add_fru_data 0x30 11 61 file 0 "/run/emu_param/ip_addresses"
 
 #The following is a marker for the set_emu_param.sh file to remove and initialize
 #fru files' length.
