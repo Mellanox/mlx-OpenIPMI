@@ -4,7 +4,7 @@
 # certain information needed by IPMI, use:
 # journalctl -u set_emu_param
 
-EMU_PARAM_DIR=/var/emu_param
+EMU_PARAM_DIR=/run/emu_param
 
 # Data that is needed to build the .emu file
 # will be provided in the emu_param directory
