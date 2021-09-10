@@ -5,13 +5,13 @@ Before=set_emu_param.service
 
 [Service]
 EnvironmentFile=/etc/ipmi/progconf
-ExecStartPre=/bin/bash -c '/usr/bin/set_emu_param.sh ${BF_FAMILY} ${SUPPORT_IPMB} ${OOB_IP} ${EXTERNAL_DDR} ${LOOP_PERIOD}'
+ExecStartPre=/bin/bash -c '/usr/bin/mlx_ipmid_init.sh ${BF_FAMILY} ${SUPPORT_IPMB} ${OOB_IP} ${EXTERNAL_DDR} ${LOOP_PERIOD}'
 ExecStart=/usr/bin/ipmi_sim -c /etc/ipmi/mlx-bf.lan.conf -f /etc/ipmi/mlx-bf.emu -s /var
 Restart=always
 RestartSec=10
 TimeoutSec=60
-StandardOutput=append:/run/log/mlx_ipmid.log
-StandardError=append:/run/log/mlx_ipmid.log
+StandardOutput=file:/run/log/mlx_ipmid.log
+StandardError=file:/run/log/mlx_ipmid.log
 
 [Install]
 WantedBy=multi-user.target

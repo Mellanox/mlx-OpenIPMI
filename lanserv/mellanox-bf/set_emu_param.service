@@ -4,9 +4,10 @@ After=mlx_ipmid.service
 
 [Service]
 EnvironmentFile=/etc/ipmi/progconf
+ExecStartPre=/bin/bash -c 'rm -f /run/log/set_emu_param.log'
 ExecStart=/bin/bash -c '/usr/bin/poll_set_emu_param.sh ${LOOP_PERIOD} ${BF_FAMILY} ${SUPPORT_IPMB} ${OOB_IP} ${EXTERNAL_DDR}'
-StandardOutput=append:/run/log/set_emu_param.log
-StandardError=append:/run/log/set_emu_param.log
+StandardOutput=file:/run/log/set_emu_param.log
+StandardError=file:/run/log/set_emu_param.log
 SyslogIdentifier=setipmi
 
 [Install]
