@@ -41,6 +41,9 @@ Source: %{_name}-%{_version}.tar.gz
 BuildRoot: %{?build_root:%{build_root}}%{!?build_root:/var/tmp/OFED}
 Vendor: Mellanox Technologies
 Requires: rasdaemon
+Provides: OpenIPMI
+Provides: OpenIPMI-libs
+Provides: OpenIPMI-modalias
 
 
 %description
