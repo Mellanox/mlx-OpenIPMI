@@ -38,16 +38,16 @@ loop_period=$5
 # script $fru_timer times before an hour has
 # passed and we can update the desired FRUs.
 fru_timer=$((3600 / $loop_period))
-if [ ! -s /tmp/ipmb_update_timer ]; then
-         echo $fru_timer > /tmp/ipmb_update_timer
+if [ ! -s $EMU_PARAM_DIR/ipmb_update_timer ]; then
+         echo $fru_timer > $EMU_PARAM_DIR/ipmb_update_timer
          t=$fru_timer
 else
-         t=$(cat /tmp/ipmb_update_timer)
+         t=$(cat $EMU_PARAM_DIR/ipmb_update_timer)
          if [ "$t" = "0x000" ]; then
-                 echo $fru_timer > /tmp/ipmb_update_timer
+                 echo $fru_timer > $EMU_PARAM_DIR/ipmb_update_timer
          else
                 m=$(($t - 1))
-                printf "0x%03X\n" $m > /tmp/ipmb_update_timer
+                printf "0x%03X\n" $m > $EMU_PARAM_DIR/ipmb_update_timer
          fi
 fi
 
@@ -146,12 +146,12 @@ add_fru() {
 grep_for_dimm_temp() {
 	# In Yocto, grep for the "DDR4 Temp" string, since we use a customized sensors.conf file.
 	# But in CentOS, libsensors is yum installed so grep for the default "temp1:" string.
-	grep "DDR4 Temp:" $EMU_PARAM_DIR/$1_info > /tmp/DDR4_str
-	grep "temp1:" $EMU_PARAM_DIR/$1_info > /tmp/temp1_str
-	if [ -s /tmp/DDR4_str ]; then
-		cat /tmp/DDR4_str | cut -d "+" -f 2 | cut -d "." -f 1 > $EMU_PARAM_DIR/$1
-	elif [ -s /tmp/temp1_str ]; then
-		cat /tmp/temp1_str | cut -d "+" -f 2 | cut -d "." -f 1 > $EMU_PARAM_DIR/$1
+	grep "DDR4 Temp:" $EMU_PARAM_DIR/$1_info > $EMU_PARAM_DIR/DDR4_str
+	grep "temp1:" $EMU_PARAM_DIR/$1_info > $EMU_PARAM_DIR/temp1_str
+	if [ -s $EMU_PARAM_DIR/DDR4_str ]; then
+		cat $EMU_PARAM_DIR/DDR4_str | cut -d "+" -f 2 | cut -d "." -f 1 > $EMU_PARAM_DIR/$1
+	elif [ -s $EMU_PARAM_DIR/temp1_str ]; then
+		cat $EMU_PARAM_DIR/temp1_str | cut -d "+" -f 2 | cut -d "." -f 1 > $EMU_PARAM_DIR/$1
 	else
 		echo WARNING: Unable to find DIMM temp
 	fi
@@ -164,20 +164,20 @@ get_qsfp_eeprom_data() {
 	# address space of 128 bytes and multiple address pages of 128 bytes each.
 	# Only lower and upper page 0 is required and hence reported.
 	# Get 256 bytes of raw hex data from QSFP EEPROM at page 0 and offset 0.
-	mlxcables -d $1 --print_raw -r -p 0 -o 0 -l 256 -b 32 > /tmp/temp1
+	mlxcables -d $1 --print_raw -r -p 0 -o 0 -l 256 -b 32 > $EMU_PARAM_DIR/temp1
 
 	# strip the raw hex data from byte id
-	sed s/[0-9][0-9][0-9]:// /tmp/temp1 > /tmp/temp2
+	sed s/[0-9][0-9][0-9]:// $EMU_PARAM_DIR/temp1 > $EMU_PARAM_DIR/temp2
 
 	# Put all data in one line and rm space between bytes,
 	# then convert it to a binary file.
-	cat /tmp/temp2 | tr -d ' ' | tr -d '\n' | perl -lpe '$_=pack"H*",$_' > /tmp/temp1
+	cat $EMU_PARAM_DIR/temp2 | tr -d ' ' | tr -d '\n' | perl -lpe '$_=pack"H*",$_' > $EMU_PARAM_DIR/temp1
 
 	# Make sure binary data packed is 256 bytes
-	dd if=/tmp/temp1 of=$EMU_PARAM_DIR/$2 bs=1 skip=0 count=256
+	dd if=$EMU_PARAM_DIR/temp1 of=$EMU_PARAM_DIR/$2 bs=1 skip=0 count=256
 	wc -c $EMU_PARAM_DIR/$2 | cut -f 1 -d " " > $EMU_PARAM_DIR/$2"_filelen"
 
-	rm /tmp/temp1 /tmp/temp2
+	rm $EMU_PARAM_DIR/temp1 $EMU_PARAM_DIR/temp2
 }
 
 # $1 is the mst cable name
@@ -419,8 +419,8 @@ if [ ! -s $EMU_PARAM_DIR/eth_bdfs.txt ] && [ ! -s $EMU_PARAM_DIR/ib_bdfs.txt ]; 
 	Unable to get NIC PCI device info since the network ports are not configured.
 	EOF
 
-	echo 2 > /tmp/p0_link
-	echo 2 > /tmp/p1_link
+	echo 2 > $EMU_PARAM_DIR/p0_link
+	echo 2 > $EMU_PARAM_DIR/p1_link
 else
 	bdf_eth=$(head -n 1 $EMU_PARAM_DIR/eth_bdfs.txt)
 	bdf_ib=$(head -n 1 $EMU_PARAM_DIR/ib_bdfs.txt)
@@ -436,14 +436,14 @@ else
 			func=$(echo $bdf | cut -f 1 -d " " | cut -f 2 -d ".")
 
 			if [ "$link_status" = "up" ]; then
-				if [ ! -f /tmp/p$func"_link" ] || [ $(grep 2 /tmp/p$func"_link") ]; then
+				if [ ! -f $EMU_PARAM_DIR/p$func"_link" ] || [ $(grep 2 $EMU_PARAM_DIR/p$func"_link") ]; then
 					eval "p${func}_changed=1"
-					echo 1 > /tmp/p$func"_link"
+					echo 1 > $EMU_PARAM_DIR/p$func"_link"
 				fi
 			else
-				if [ ! -f /tmp/p$func"_link" ] || [ $(grep 1 /tmp/p$func"_link") ]; then
+				if [ ! -f $EMU_PARAM_DIR/p$func"_link" ] || [ $(grep 1 $EMU_PARAM_DIR/p$func"_link") ]; then
 					eval "p${func}_changed=1"
-					echo 2 > /tmp/p$func"_link"
+					echo 2 > $EMU_PARAM_DIR/p$func"_link"
 				fi
 			fi
 		done <$EMU_PARAM_DIR/eth_bdfs.txt
@@ -455,14 +455,14 @@ else
 			link_status=$(cat /sys/class/net/ib*$func/operstate)
 
 			if [ "$link_status" = "up" ]; then
-				if [ ! -f /tmp/p$func"_link" ] || [ $(grep 2 /tmp/p$func"_link") ]; then
+				if [ ! -f $EMU_PARAM_DIR/p$func"_link" ] || [ $(grep 2 $EMU_PARAM_DIR/p$func"_link") ]; then
 					eval "p${func}_changed=1"
-					echo 1 > /tmp/p$func"_link"
+					echo 1 > $EMU_PARAM_DIR/p$func"_link"
 				fi
 			else
-				if [ ! -f /tmp/p$func"_link" ] || [ $(grep 1 /tmp/p$func"_link") ]; then
+				if [ ! -f $EMU_PARAM_DIR/p$func"_link" ] || [ $(grep 1 $EMU_PARAM_DIR/p$func"_link") ]; then
 					eval "p${func}_changed=1"
-					echo 2 > /tmp/p$func"_link"
+					echo 2 > $EMU_PARAM_DIR/p$func"_link"
 				fi
 			fi
 		done <$EMU_PARAM_DIR/ib_bdfs.txt
@@ -589,8 +589,8 @@ fi
 # add trailing spaces to each line so that the dimms_ce_ue FRU can be updated
 # when the number of errors increases.
 
-ras-mc-ctl --error-count > /tmp/dimms_ce_ue
-awk '{printf "%-100s\n", $0}' /tmp/dimms_ce_ue > $EMU_PARAM_DIR/dimms_ce_ue
+ras-mc-ctl --error-count > $EMU_PARAM_DIR/dimms_ce_ue
+awk '{printf "%-100s\n", $0}' $EMU_PARAM_DIR/dimms_ce_ue > $EMU_PARAM_DIR/dimms_ce_ue
 
 
 ###################################
@@ -668,26 +668,26 @@ if [ "$t" = "$fru_timer" ]; then
 	if [ -z "$CID" ]; then
 		CID=`printf '00 %.0s' $(seq 1 16)`
 	fi
-	echo $CID |tr -d ' ' | tr -d '\n' | perl -lpe '$_=pack"H*",$_' > /tmp/temp
-	dd if=/tmp/temp of=$EMU_PARAM_DIR/emmc_cid bs=1 skip=0 count=16
+	echo $CID |tr -d ' ' | tr -d '\n' | perl -lpe '$_=pack"H*",$_' > $EMU_PARAM_DIR/temp
+	dd if=$EMU_PARAM_DIR/temp of=$EMU_PARAM_DIR/emmc_cid bs=1 skip=0 count=16
 
 	# CSD binary data
 	CSD=`find /sys/devices -name 'csd'| grep mmc| xargs cat| sed 's/.\{2\}/& /g'`
 	if [ -z "$CSD" ]; then
 		CSD=`printf '00 %.0s' $(seq 1 16)`
 	fi
-	echo $CSD |tr -d ' ' | tr -d '\n' | perl -lpe '$_=pack"H*",$_' > /tmp/temp
-	dd if=/tmp/temp of=$EMU_PARAM_DIR/emmc_csd bs=1 skip=0 count=16
+	echo $CSD |tr -d ' ' | tr -d '\n' | perl -lpe '$_=pack"H*",$_' > $EMU_PARAM_DIR/temp
+	dd if=$EMU_PARAM_DIR/temp of=$EMU_PARAM_DIR/emmc_csd bs=1 skip=0 count=16
 
 	# Ext CSD binary data
 	EXTCSD=`cat '/sys/kernel/debug/mmc0/mmc0:0001/ext_csd' | sed 's/.\{2\}/& /g'`
 	if [ -z "$EXTCSD" ]; then
 		EXTCSD=`printf 'ff %.0s' $(seq 1 16)`
 	fi
-	echo $EXTCSD |tr -d ' ' | tr -d '\n' | perl -lpe '$_=pack"H*",$_' > /tmp/temp
-	dd if=/tmp/temp of=$EMU_PARAM_DIR/emmc_extcsd bs=1 skip=0 count=512
+	echo $EXTCSD |tr -d ' ' | tr -d '\n' | perl -lpe '$_=pack"H*",$_' > $EMU_PARAM_DIR/temp
+	dd if=$EMU_PARAM_DIR/temp of=$EMU_PARAM_DIR/emmc_extcsd bs=1 skip=0 count=512
 
-	rm /tmp/temp
+	rm $EMU_PARAM_DIR/temp
 
 	# Concatenate the binaries together
 	cat $EMU_PARAM_DIR/emmc_cid $EMU_PARAM_DIR/emmc_csd $EMU_PARAM_DIR/emmc_extcsd >> $EMU_PARAM_DIR/emmc_info
@@ -710,7 +710,7 @@ if [ "$t" = "$fru_timer" ]; then
 	sed -i '/DELETE AT START/Q' $EMU_FILE_PATH
 	echo "#DELETE AT START" >> $EMU_FILE_PATH
 
-	echo "mc_add_fru_data 0x30 0 6 file 0 \"/tmp/ipmb_update_timer\"" >> $EMU_FILE_PATH
+	echo "mc_add_fru_data 0x30 0 6 file 0 \"$EMU_PARAM_DIR/ipmb_update_timer\"" >> $EMU_FILE_PATH
 
 	add_fru "fw_info" 1
 	add_fru "nic_pci_dev_info" 2
