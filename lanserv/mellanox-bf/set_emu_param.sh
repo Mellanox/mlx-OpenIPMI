@@ -588,9 +588,11 @@ fi
 ###################
 # add trailing spaces to each line so that the dimms_ce_ue FRU can be updated
 # when the number of errors increases.
-
-ras-mc-ctl --error-count > $EMU_PARAM_DIR/dimms_ce_ue
-awk '{printf "%-100s\n", $0}' $EMU_PARAM_DIR/dimms_ce_ue > $EMU_PARAM_DIR/dimms_ce_ue
+if [ $(( $curr_time % 10 )) -eq 0 ]; then
+  ras-mc-ctl --error-count > $EMU_PARAM_DIR/ce_ue_tmp
+  { grep 'Label\|mc#0' $EMU_PARAM_DIR/ce_ue_tmp; grep -v 'Label\|mc#0' $EMU_PARAM_DIR/ce_ue_tmp; } > $EMU_PARAM_DIR/ce_ue_tmp1
+  awk '{printf "%-100s\n", $0}' $EMU_PARAM_DIR/ce_ue_tmp1 > $EMU_PARAM_DIR/dimms_ce_ue
+fi
 
 
 ###################################
