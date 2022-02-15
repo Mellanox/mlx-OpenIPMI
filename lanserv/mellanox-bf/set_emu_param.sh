@@ -103,9 +103,9 @@ if [ "$i2cbus" != "NONE" ]; then
 		   [ "$bffamily" = "Camelantis" ] || [ "$bffamily" = "Aztlan" ] ||
 		   [ "$bffamily" = "Dell-Camelantis" ] || [ "$bffamily" = "Roy" ] ||
 		   [ "$bffamily" = "El-Dorado" ]; then
-			# Load the driver 2mn after boot to give the BMC time
+			# Load the driver 2.5mn after boot to give the BMC time
 			# to get ready for IPMB transactions.
-			if [ "$curr_time" -ge 120 ]; then
+			if [ "$curr_time" -ge 150 ]; then
 				modprobe ipmb_host slave_add=$IPMB_HOST_CLIENTADDR
 				echo ipmb-host $IPMB_HOST_ADD > $I2C_NEW_DEV
 			fi
