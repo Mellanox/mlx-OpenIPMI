@@ -694,6 +694,7 @@ if [ "$t" = "$fru_timer" ]; then
 	# Concatenate the binaries together
 	cat $EMU_PARAM_DIR/emmc_cid $EMU_PARAM_DIR/emmc_csd $EMU_PARAM_DIR/emmc_extcsd >> $EMU_PARAM_DIR/emmc_info
 
+	truncate -s 2000 $EMU_PARAM_DIR/emmc_info
 	wc -c $EMU_PARAM_DIR/emmc_info | cut -f 1 -d " " > $EMU_PARAM_DIR/emmc_info_filelen
 
 
