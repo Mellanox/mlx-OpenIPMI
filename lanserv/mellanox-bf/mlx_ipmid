@@ -4,5 +4,7 @@
         missingok
         nodateext
         compress
-        copytruncate
+        postrotate
+                /bin/systemctl restart mlx_ipmid.service
+        endscript
 }
