@@ -6,10 +6,6 @@
 
 EMU_PARAM_DIR=/run/emu_param
 
-# Data that is needed to build the .emu file
-# will be provided in the emu_param directory
-EMU_FILE_PATH=/etc/ipmi/mlx-bf.emu
-
 if [ ! -d $EMU_PARAM_DIR ]; then
 	mkdir $EMU_PARAM_DIR
 fi
@@ -136,13 +132,6 @@ remove_sensor() {
 	rm -f $EMU_PARAM_DIR/$1
 }
 
-add_fru() {
-	filelen=$(cat $EMU_PARAM_DIR/$1"_filelen")
-	if [ $filelen -gt 0 ]; then
-		echo "mc_add_fru_data 0x30 $2 $filelen file 0 \"$EMU_PARAM_DIR/$1\"" >> $EMU_FILE_PATH
-	fi
-}
-
 grep_for_dimm_temp() {
 	# In Yocto, grep for the "DDR4 Temp" string, since we use a customized sensors.conf file.
 	# But in CentOS, libsensors is yum installed so grep for the default "temp1:" string.
@@ -175,7 +164,6 @@ get_qsfp_eeprom_data() {
 
 	# Make sure binary data packed is 256 bytes
 	dd if=$EMU_PARAM_DIR/temp1 of=$EMU_PARAM_DIR/$2 bs=1 skip=0 count=256
-	wc -c $EMU_PARAM_DIR/$2 | cut -f 1 -d " " > $EMU_PARAM_DIR/$2"_filelen"
 
 	rm $EMU_PARAM_DIR/temp1 $EMU_PARAM_DIR/temp2
 }
@@ -331,6 +319,30 @@ if [ "$(lsmod | grep ee1004)" ]; then
 	done
 fi
 
+if [ ! -s $EMU_PARAM_DIR/ddr0_0_spd ] && [ -s /sys/bus/i2c/drivers/ee1004/1-0050/eeprom ]; then
+	cp /sys/bus/i2c/drivers/ee1004/1-0050/eeprom $EMU_PARAM_DIR/ddr0_0_spd
+else
+	truncate -s 512 $EMU_PARAM_DIR/ddr0_0_spd
+fi
+
+if [ ! -s $EMU_PARAM_DIR/ddr0_1_spd ] && [ -s /sys/bus/i2c/drivers/ee1004/1-0051/eeprom ]; then
+	cp /sys/bus/i2c/drivers/ee1004/1-0051/eeprom $EMU_PARAM_DIR/ddr0_1_spd
+else
+	truncate -s 512 $EMU_PARAM_DIR/ddr0_1_spd
+fi
+
+if [ ! -s $EMU_PARAM_DIR/ddr1_0_spd ] && [ -s /sys/bus/i2c/drivers/ee1004/1-0052/eeprom ]; then
+	cp /sys/bus/i2c/drivers/ee1004/1-0052/eeprom $EMU_PARAM_DIR/ddr1_0_spd
+else
+	truncate -s 512 $EMU_PARAM_DIR/ddr1_0_spd
+fi
+
+if [ ! -s $EMU_PARAM_DIR/ddr1_1_spd ] && [ -s /sys/bus/i2c/drivers/ee1004/1-0053/eeprom ]; then
+	cp /sys/bus/i2c/drivers/ee1004/1-0053/eeprom $EMU_PARAM_DIR/ddr1_1_spd
+else
+	truncate -s 512 $EMU_PARAM_DIR/ddr1_1_spd
+fi
+
 ###############################################
 #           Get DIMMs' temperature            #
 ###############################################
@@ -430,6 +442,8 @@ else
 	lspci -n -v -m -s $bdf_eth > $EMU_PARAM_DIR/nic_pci_dev_info 2>/dev/null
 	lspci -n -v -m -s $bdf_ib >> $EMU_PARAM_DIR/nic_pci_dev_info 2>/dev/null
 
+	truncate -s 100 $EMU_PARAM_DIR/nic_pci_dev_info
+
 	if [ -s $EMU_PARAM_DIR/eth_bdfs.txt ]; then
 		while read bdf; do
 			link_status=$(cat /sys/bus/pci/devices/0000\:$bdf/net/*/operstate)
@@ -468,8 +482,6 @@ else
 		done <$EMU_PARAM_DIR/ib_bdfs.txt
 	fi
 fi
-
-wc -c $EMU_PARAM_DIR/nic_pci_dev_info | cut -f 1 -d " " > $EMU_PARAM_DIR/nic_pci_dev_info_filelen
 
 rm -f $EMU_PARAM_DIR/eth_bdfs.txt
 rm -f $EMU_PARAM_DIR/ib_bdfs.txt
@@ -532,7 +544,7 @@ get_fw_info() {
 		echo "M.2 SSD version:$ssd_v" >> $EMU_PARAM_DIR/fw_info
 	fi
 
-	wc -c $EMU_PARAM_DIR/fw_info | cut -f 1 -d " " > $EMU_PARAM_DIR/fw_info_filelen
+	truncate -s 2000 $EMU_PARAM_DIR/fw_info
 }
 
 
@@ -592,6 +604,7 @@ if [ $(( $curr_time % 10 )) -eq 0 ]; then
   ras-mc-ctl --error-count > $EMU_PARAM_DIR/ce_ue_tmp
   { grep 'Label\|mc#0' $EMU_PARAM_DIR/ce_ue_tmp; grep -v 'Label\|mc#0' $EMU_PARAM_DIR/ce_ue_tmp; } > $EMU_PARAM_DIR/ce_ue_tmp1
   awk '{printf "%-100s\n", $0}' $EMU_PARAM_DIR/ce_ue_tmp1 > $EMU_PARAM_DIR/dimms_ce_ue
+  truncate -s 303 $EMU_PARAM_DIR/dimms_ce_ue
 fi
 
 
@@ -626,7 +639,7 @@ if [ "$t" = "$fru_timer" ]; then
 	###################################
 	lscpu > $EMU_PARAM_DIR/cpuinfo
 	cat /proc/cpuinfo >> $EMU_PARAM_DIR/cpuinfo
-	wc -c $EMU_PARAM_DIR/cpuinfo | cut -f 1 -d " " > $EMU_PARAM_DIR/cpuinfo_filelen
+	truncate -s 3500 $EMU_PARAM_DIR/cpuinfo
 
 
 	##########################################
@@ -695,68 +708,11 @@ if [ "$t" = "$fru_timer" ]; then
 	cat $EMU_PARAM_DIR/emmc_cid $EMU_PARAM_DIR/emmc_csd $EMU_PARAM_DIR/emmc_extcsd >> $EMU_PARAM_DIR/emmc_info
 
 	truncate -s 2000 $EMU_PARAM_DIR/emmc_info
-	wc -c $EMU_PARAM_DIR/emmc_info | cut -f 1 -d " " > $EMU_PARAM_DIR/emmc_info_filelen
 
 
-	#############################################
-	# Add FRU parameters to the mlx-bf.emu file #
-	#############################################
-
-	# We need to know the length of the files before passing that value to
-	# mc_add_fru_data. If we pass a length that is larger than the file,
-	# the read fails and the output for reading the FRU is invalid.
-	DDR00_SPD_PATH=/sys/bus/i2c/drivers/ee1004/1-0050/eeprom
-	DDR01_SPD_PATH=/sys/bus/i2c/drivers/ee1004/1-0051/eeprom
-	DDR10_SPD_PATH=/sys/bus/i2c/drivers/ee1004/1-0052/eeprom
-	DDR11_SPD_PATH=/sys/bus/i2c/drivers/ee1004/1-0053/eeprom
-
-	sed -i '/DELETE AT START/Q' $EMU_FILE_PATH
-	echo "#DELETE AT START" >> $EMU_FILE_PATH
-
-	echo "mc_add_fru_data 0x30 0 6 file 0 \"$EMU_PARAM_DIR/ipmb_update_timer\"" >> $EMU_FILE_PATH
-
-	add_fru "fw_info" 1
-	add_fru "nic_pci_dev_info" 2
-	add_fru "cpuinfo" 3
-
-	if [ -s $DDR00_SPD_PATH ]; then
-		wc -c $DDR00_SPD_PATH | cut -f 1 -d " " > $EMU_PARAM_DIR/ddr0_0_spd_filelen
-		echo "mc_add_fru_data 0x30 4 $(cat $EMU_PARAM_DIR/ddr0_0_spd_filelen) file 0 \"$DDR00_SPD_PATH\"" >> $EMU_FILE_PATH
-	fi
-	if [ -s $DDR01_SPD_PATH ]; then
-		wc -c $DDR01_SPD_PATH | cut -f 1 -d " " > $EMU_PARAM_DIR/ddr0_1_spd_filelen
-		echo "mc_add_fru_data 0x30 5 $(cat $EMU_PARAM_DIR/ddr0_1_spd_filelen) file 0 \"$DDR01_SPD_PATH\"" >> $EMU_FILE_PATH
-	fi
-	if [ -s $DDR10_SPD_PATH ]; then
-		wc -c $DDR10_SPD_PATH | cut -f 1 -d " " > $EMU_PARAM_DIR/ddr1_0_spd_filelen
-		echo "mc_add_fru_data 0x30 6 $(cat $EMU_PARAM_DIR/ddr1_0_spd_filelen) file 0 \"$DDR10_SPD_PATH\"" >> $EMU_FILE_PATH
-	fi
-	if [ -s $DDR11_SPD_PATH ]; then
-		wc -c $DDR11_SPD_PATH | cut -f 1 -d " " > $EMU_PARAM_DIR/ddr1_1_spd_filelen
-		echo "mc_add_fru_data 0x30 7 $(cat $EMU_PARAM_DIR/ddr1_1_spd_filelen) file 0 \"$DDR11_SPD_PATH\"" >> $EMU_FILE_PATH
-	fi
-
-	wc -c $EMU_PARAM_DIR/dimms_ce_ue | cut -f 1 -d " " > $EMU_PARAM_DIR/dimms_ce_ue_filelen
-	wc -c $EMU_PARAM_DIR/eth0 | cut -f 1 -d " " > $EMU_PARAM_DIR/eth0_filelen
-	wc -c $EMU_PARAM_DIR/eth1 | cut -f 1 -d " " > $EMU_PARAM_DIR/eth1_filelen
-	wc -c $EMU_PARAM_DIR/eth_hw_counters | cut -f 1 -d " " > $EMU_PARAM_DIR/eth_hw_counters_filelen
-	wc -c $EMU_PARAM_DIR/qsfp0_eeprom | cut -f 1 -d " " > $EMU_PARAM_DIR/qsfp0_eeprom_filelen
-	wc -c $EMU_PARAM_DIR/qsfp1_eeprom | cut -f 1 -d " " > $EMU_PARAM_DIR/qsfp1_eeprom_filelen
-
-	add_fru "emmc_info" 8
-	add_fru "qsfp0_eeprom" 9
-	add_fru "qsfp1_eeprom" 10
-	add_fru "dimms_ce_ue" 12
-	if [ -s $EMU_PARAM_DIR/eth0_filelen ]; then
-		add_fru "eth0" 13
-	fi
-	if [ -s $EMU_PARAM_DIR/eth1_filelen ]; then
-		add_fru "eth1" 14
-	fi
-	if [ -s $EMU_PARAM_DIR/eth_hw_counters_filelen ]; then
-		add_fru "eth_hw_counters" 16
-	fi
-
+	##########################################
+	#          Get BF UID info               #
+	##########################################
 	mlxreg -d /dev/mst/mt*_pciconf0 --reg_name MDIR --get | awk '{if(NR>2)print}' \
 	       	| grep device | cut -d "x" -f 2 | tr -d '\n' > $EMU_PARAM_DIR/bf_uid
 	if [ ! -s $EMU_PARAM_DIR/bf_uid ]; then
@@ -765,8 +721,4 @@ if [ "$t" = "$fru_timer" ]; then
 		to MFT version 4.15.0-104 or higher.
 		EOF
 	fi
-	wc -c $EMU_PARAM_DIR/bf_uid | cut -f 1 -d " " > $EMU_PARAM_DIR/bf_uid_filelen
-	add_fru "bf_uid" 15
-
-	echo "mc_enable 0x30" >> $EMU_FILE_PATH
 fi

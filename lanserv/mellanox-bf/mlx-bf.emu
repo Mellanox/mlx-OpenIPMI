@@ -97,5 +97,20 @@ mc_add_fru_data 0x30 11 61 file 0 "/run/emu_param/ip_addresses"
 #The following is a marker for the set_emu_param.sh file to remove and initialize
 #fru files' length.
 
-#DELETE AT START
+mc_add_fru_data 0x30 0 6 file 0 "/run/emu_param/ipmb_update_timer"
+mc_add_fru_data 0x30 1 2000 file 0 "/run/emu_param/fw_info"
+mc_add_fru_data 0x30 2 100 file 0 "/run/emu_param/nic_pci_dev_info"
+mc_add_fru_data 0x30 3 3500 file 0 "/run/emu_param/cpuinfo"
+mc_add_fru_data 0x30 4 512 file 0 "/run/emu_param/ddr0_0_spd"
+mc_add_fru_data 0x30 5 512 file 0 "/run/emu_param/ddr0_1_spd"
+mc_add_fru_data 0x30 6 512 file 0 "/run/emu_param/ddr1_0_spd"
+mc_add_fru_data 0x30 7 512 file 0 "/run/emu_param/ddr1_1_spd"
+mc_add_fru_data 0x30 8 2000 file 0 "/run/emu_param/emmc_info"
+mc_add_fru_data 0x30 9 256 file 0 "/run/emu_param/qsfp0_eeprom"
+mc_add_fru_data 0x30 10 256 file 0 "/run/emu_param/qsfp1_eeprom"
+mc_add_fru_data 0x30 12 303 file 0 "/run/emu_param/dimms_ce_ue"
+mc_add_fru_data 0x30 13 3200 file 0 "/run/emu_param/eth0"
+mc_add_fru_data 0x30 14 3200 file 0 "/run/emu_param/eth1"
+mc_add_fru_data 0x30 15 64 file 0 "/run/emu_param/bf_uid"
+mc_add_fru_data 0x30 16 3000 file 0 "/run/emu_param/eth_hw_counters"
 mc_enable 0x30
