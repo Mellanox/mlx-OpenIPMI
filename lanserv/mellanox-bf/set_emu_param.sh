@@ -69,7 +69,8 @@ if [ "$bffamily" = "Bluewhale" ]; then
 elif [ "$bffamily" = "BlueSphere" ] || [ "$bffamily" = "PRIS" ] ||
      [ "$bffamily" = "Camelantis" ] || [ "$bffamily" = "Aztlan" ] ||
      [ "$bffamily" = "Dell-Camelantis" ] || [ "$bffamily" = "Roy" ] ||
-     [ "$bffamily" = "El-Dorado" ]; then
+     [ "$bffamily" = "El-Dorado" ] || [ "$bffamily" = "Moonraker" ] ||
+     [ "$bffamily" = "goldeneye" ]; then
 	i2cbus=1
 else
 	i2cbus=$support_ipmb
@@ -98,7 +99,8 @@ if [ "$i2cbus" != "NONE" ]; then
 		if [ "$bffamily" = "BlueSphere" ] || [ "$bffamily" = "PRIS" ] ||
 		   [ "$bffamily" = "Camelantis" ] || [ "$bffamily" = "Aztlan" ] ||
 		   [ "$bffamily" = "Dell-Camelantis" ] || [ "$bffamily" = "Roy" ] ||
-		   [ "$bffamily" = "El-Dorado" ]; then
+		   [ "$bffamily" = "El-Dorado" ]  || [ "$bffamily" = "Moonraker" ] ||
+                   [ "$bffamily" = "goldeneye" ]; then
 			# Load the driver 2.5mn after boot to give the BMC time
 			# to get ready for IPMB transactions.
 			if [ "$curr_time" -ge 150 ]; then
