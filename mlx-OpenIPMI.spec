@@ -93,6 +93,7 @@ make %{?_smp_mflags}
 %{_bindir}/set_emu_param.sh
 %{_bindir}/poll_set_emu_param.sh
 %{_bindir}/mlx_ipmid_init.sh
+%{_bindir}/mlx_emu_init.sh
 /usr/lib64/libOpen*
 /usr/lib64/libIPMI*
 /usr/lib64/pkgconfig/OpenIPMI*
