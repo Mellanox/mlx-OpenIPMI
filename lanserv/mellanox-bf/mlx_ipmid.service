@@ -6,6 +6,7 @@ Before=set_emu_param.service
 [Service]
 EnvironmentFile=/etc/ipmi/progconf
 ExecStartPre=/bin/bash -c '/usr/bin/mlx_ipmid_init.sh ${BF_FAMILY} ${SUPPORT_IPMB} ${OOB_IP} ${EXTERNAL_DDR} ${LOOP_PERIOD}'
+ExecStartPre=/bin/bash -c '/usr/bin/mlx_emu_init.sh'
 ExecStart=/usr/bin/ipmi_sim -c /etc/ipmi/mlx-bf.lan.conf -f /etc/ipmi/mlx-bf.emu -s /var
 Restart=always
 RestartSec=10

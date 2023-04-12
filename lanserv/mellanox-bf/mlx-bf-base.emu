@@ -7,7 +7,7 @@ mc_setbmc 0x30
 # Add the MC
 # mc_add IPMBaddress DeviceID HasDeviceSDRs DeviceRevision MajorFWRev MinorFWRev
 # DeviceSupport ManufacturerID ProductID
-mc_add 0x30 0x30 no-device-sdrs 0x1 1 0 0x9f 0x8119 0x3 persist_sdr
+mc_add 0x30 0x30 no-device-sdrs 0x1 1 0 0x9f 0x8119 $PRODUCT_ID persist_sdr
 
 # sel_enable mc-addr max-entries flags
 sel_enable 0x30 1000 0x0a
