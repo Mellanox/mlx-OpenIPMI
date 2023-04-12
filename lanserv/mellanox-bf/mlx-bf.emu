@@ -4,10 +4,24 @@
 # The BF's MC is at address 30
 mc_setbmc 0x30
 
+# Identify the platform ID and initialize the PRODUCT_ID accordingly where:
+# 0x3 – bluefield2 product id
+# 0x4 – bluefield3 product id
+BF2_PLATFORM_ID=0x00000214
+BF3_PLATFORM_ID=0x0000021c
+
+bfversion=$(bfhcafw mcra 0xf0014.0:16)
+
+if [ "$bfversion" = $BF2_PLATFORM_ID ]; then
+   productid=0x3
+elif  [ "$bfversion" = $BF3_PLATFORM_ID ]; then
+   productid=0x4
+fi
+
 # Add the MC
 # mc_add IPMBaddress DeviceID HasDeviceSDRs DeviceRevision MajorFWRev MinorFWRev
 # DeviceSupport ManufacturerID ProductID
-mc_add 0x30 0x30 no-device-sdrs 0x1 1 0 0x9f 0x8119 0x3 persist_sdr
+mc_add 0x30 0x30 no-device-sdrs 0x1 1 0 0x9f 0x8119 $productid  persist_sdr
 
 # sel_enable mc-addr max-entries flags
 sel_enable 0x30 1000 0x0a

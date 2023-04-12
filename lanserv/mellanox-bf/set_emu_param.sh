@@ -70,7 +70,7 @@ elif [ "$bffamily" = "BlueSphere" ] || [ "$bffamily" = "PRIS" ] ||
      [ "$bffamily" = "Camelantis" ] || [ "$bffamily" = "Aztlan" ] ||
      [ "$bffamily" = "Dell-Camelantis" ] || [ "$bffamily" = "Roy" ] ||
      [ "$bffamily" = "El-Dorado" ] || [ "$bffamily" = "Moonraker" ] ||
-     [ "$bffamily" = "goldeneye" ]; then
+     [ "$bffamily" = "Goldeneye" ]; then
 	i2cbus=1
 else
 	i2cbus=$support_ipmb
@@ -100,7 +100,7 @@ if [ "$i2cbus" != "NONE" ]; then
 		   [ "$bffamily" = "Camelantis" ] || [ "$bffamily" = "Aztlan" ] ||
 		   [ "$bffamily" = "Dell-Camelantis" ] || [ "$bffamily" = "Roy" ] ||
 		   [ "$bffamily" = "El-Dorado" ]  || [ "$bffamily" = "Moonraker" ] ||
-                   [ "$bffamily" = "goldeneye" ]; then
+                   [ "$bffamily" = "Goldeneye" ]; then
 			# Load the driver 2.5mn after boot to give the BMC time
 			# to get ready for IPMB transactions.
 			if [ "$curr_time" -ge 150 ]; then
@@ -448,8 +448,8 @@ else
 
 	if [ -s $EMU_PARAM_DIR/eth_bdfs.txt ]; then
 		while read bdf; do
-			link_status=$(cat /sys/bus/pci/devices/0000\:$bdf/net/*/operstate)
 			func=$(echo $bdf | cut -f 1 -d " " | cut -f 2 -d ".")
+			link_status=$(cat /sys/bus/pci/devices/0000\:$bdf/net/p$func/operstate)
 
 			if [ "$link_status" = "up" ]; then
 				if [ ! -f $EMU_PARAM_DIR/p$func"_link" ] || [ $(grep 2 $EMU_PARAM_DIR/p$func"_link") ]; then
