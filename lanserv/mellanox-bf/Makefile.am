@@ -6,10 +6,14 @@ install-data-local:
 	$(INSTALL) -m 755 $(srcdir)/set_emu_param.sh "$(DESTDIR)$(bindir)/"; \
 	$(INSTALL) -m 755 $(srcdir)/poll_set_emu_param.sh "$(DESTDIR)$(bindir)/"; \
 	$(INSTALL) -m 755 $(srcdir)/mlx_ipmid_init.sh "$(DESTDIR)$(bindir)/"; \
+	$(INSTALL) -m 755 $(srcdir)/mlx_emu_init.sh "$(DESTDIR)$(bindir)/"; \
 	$(INSTALL) -m 644 $(srcdir)/set_emu_param.service "$(DESTDIR)/lib/systemd/system/"; \
 	$(INSTALL) -m 644 $(srcdir)/sdr.30.main "$(DESTDIR)$(localstatedir)/ipmi_sim/mellanox/"; \
 	$(INSTALL) -m 644 $(srcdir)/mlx-bf.lan.conf "$(DESTDIR)$(sysconfdir)/ipmi/"; \
-	$(INSTALL) -m 644 $(srcdir)/mlx-bf.emu "$(DESTDIR)$(sysconfdir)/ipmi/"; \
+	$(INSTALL) -m 644 $(srcdir)/mlx-bf-base.emu "$(DESTDIR)$(sysconfdir)/ipmi/"; \
+	$(INSTALL) -m 644 $(srcdir)/mlx-bf1.emu "$(DESTDIR)$(sysconfdir)/ipmi/"; \
+	$(INSTALL) -m 644 $(srcdir)/mlx-bf2.emu "$(DESTDIR)$(sysconfdir)/ipmi/"; \
+	$(INSTALL) -m 644 $(srcdir)/mlx-bf3.emu "$(DESTDIR)$(sysconfdir)/ipmi/"; \
 	$(INSTALL) -m 755 $(srcdir)/progconf "$(DESTDIR)$(sysconfdir)/ipmi/"; \
 	$(INSTALL) -m 644 $(srcdir)/mlx_ipmid.service "$(DESTDIR)/lib/systemd/system/"; \
 	$(INSTALL) -m 755 -d "$(DESTDIR)/run/log/"; \
@@ -25,9 +29,13 @@ uninstall-local:
 	-rm -f "$(DESTDIR)$(bindir)/set_emu_param.sh"
 	-rm -f "$(DESTDIR)$(bindir)/poll_set_emu_param.sh"
 	-rm -f "$(DESTDIR)$(bindir)/mlx_ipmid_init.sh"
+	-rm -f "$(DESTDIR)$(bindir)/mlx_emu_init.sh"
 	-rm -f "$(DESTDIR)$(localstatedir)/ipmi_sim/mellanox/sdr.30.main"
 	-rm -f "$(DESTDIR)$(sysconfdir)/ipmi/mlx-bf.lan.conf"
-	-rm -f "$(DESTDIR)$(sysconfdir)/ipmi/mlx-bf.emu"
+	-rm -f "$(DESTDIR)$(sysconfdir)/ipmi/mlx-bf-base.emu"
+	-rm -f "$(DESTDIR)$(sysconfdir)/ipmi/mlx-bf1.emu"
+	-rm -f "$(DESTDIR)$(sysconfdir)/ipmi/mlx-bf2.emu"
+	-rm -f "$(DESTDIR)$(sysconfdir)/ipmi/mlx-b3.emu"
 	-rm -f "$(DESTDIR)$(sysconfdir)/ipmi/progconf"
 	-rm -f "$(DESTDIR)/lib/systemd/system/mlx_ipmid.service"
 	-rm -f "$(DESTDIR)$(sysconfdir)/logrotate.d/mlx_ipmid"

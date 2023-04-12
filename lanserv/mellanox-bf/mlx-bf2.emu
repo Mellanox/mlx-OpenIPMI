@@ -1,0 +1,6 @@
+# 
+# Emulation setup file for the Nvidia Bluefield2 DPU
+# 
+
+define PRODUCT_ID "0x3"
+include "mlx-bf-base.emu"
