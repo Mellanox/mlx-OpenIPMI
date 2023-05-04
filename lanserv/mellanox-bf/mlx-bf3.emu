@@ -2,5 +2,5 @@
 # Emulation setup file for the Nvidia Bluefield23 DPU
 #
 
-define PRODUCT_ID "0x4"
+define PRODUCT_ID "0x5"
 include "mlx-bf-base.emu"
