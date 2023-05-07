@@ -1,3 +1,8 @@
+AM_CFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/lanserv
+pkglib_LTLIBRARIES = mellanox_bf_mod.la
+
+mellanox_bf_mod_la_SOURCES = mellanox_bf_mod.c
+mellanox_bf_mod_la_LDFLAGS = -module
 
 install-data-local:
 	$(INSTALL) -m 755 -d "$(DESTDIR)$(localstatedir)/ipmi_sim/mellanox/"; \

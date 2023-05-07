@@ -105,6 +105,10 @@ make %{?_smp_mflags}
 /etc/logrotate.d/set_emu_param
 /etc/rsyslog.d/mlx_ipmid.conf
 /etc/rsyslog.d/set_emu_param.conf
+/usr/lib64/OpenIPMI/mellanox_bf_mod.a
+/usr/lib64/OpenIPMI/mellanox_bf_mod.so
+/usr/lib64/OpenIPMI/mellanox_bf_mod.so.0
+/usr/lib64/OpenIPMI/mellanox_bf_mod.so.0.0.0
 
 %changelog
 * Thu May 20 2021 Asmaa Mnebhi <asmaa@nvidia.com> - 2.0.25-3
