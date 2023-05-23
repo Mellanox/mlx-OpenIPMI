@@ -62,6 +62,7 @@ IPMB_HOST_ADD=0x1011
 
 # By default, the ipmb_host driver communicates with
 # a client at address 0x10.
+# ipmb_host driver is not installed in all images
 IPMB_HOST_CLIENTADDR=0x10
 
 if [ "$bffamily" = "Bluewhale" ]; then
@@ -87,15 +88,19 @@ if [ "$i2cbus" != "NONE" ]; then
 	if ! grep -q "ipmb-$i2cbus" /etc/ipmi/mlx-bf.lan.conf; then
 		echo "  ipmb 2 ipmb_dev_int /dev/ipmb-$i2cbus" >> /etc/ipmi/mlx-bf.lan.conf
 	fi
-
-	# load the ipmb_host driver
 	if [ ! "$(lsmod | grep ipmi_msghandler)" ]; then
 		modprobe ipmi_msghandler
 	fi
 	if [ ! "$(lsmod | grep ipmi_devintf)" ]; then
 		modprobe ipmi_devintf
 	fi
-	if [ ! "$(lsmod | grep ipmb_host)" ]; then
+	
+	# load the ipmb_host driver, if installed in BF
+	is_ipmb_host_driver=false
+        if find /usr/lib/modules/ -name ipmb_host.ko -print -quit | grep -q .; then
+		is_ipmb_host_driver=true
+        fi
+        if [ ! "$(lsmod | grep ipmb_host)" ] && $is_ipmb_host_driver; then
 		if [ "$bffamily" = "BlueSphere" ] || [ "$bffamily" = "PRIS" ] ||
 		   [ "$bffamily" = "Camelantis" ] || [ "$bffamily" = "Aztlan" ] ||
 		   [ "$bffamily" = "Dell-Camelantis" ] || [ "$bffamily" = "Roy" ] ||
