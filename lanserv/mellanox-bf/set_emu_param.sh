@@ -160,32 +160,58 @@ get_qsfp_eeprom_data() {
 	# address space of 128 bytes and multiple address pages of 128 bytes each.
 	# Only lower and upper page 0 is required and hence reported.
 	# Get 256 bytes of raw hex data from QSFP EEPROM at page 0 and offset 0.
-	mlxcables -d $1 --print_raw -r -p 0 -o 0 -l 256 -b 32 > $EMU_PARAM_DIR/temp1
-
-	# strip the raw hex data from byte id
-	sed s/[0-9][0-9][0-9]:// $EMU_PARAM_DIR/temp1 > $EMU_PARAM_DIR/temp2
-
-	# Put all data in one line and rm space between bytes,
-	# then convert it to a binary file.
-	cat $EMU_PARAM_DIR/temp2 | tr -d ' ' | tr -d '\n' | perl -lpe '$_=pack"H*",$_' > $EMU_PARAM_DIR/temp1
+	mlxlink -d $1 --cable --read --page 0 --offset 0 --length 256 \
+	| grep "page\[0\].Byte"  | cut -f 2 -d ":" | tr -d ' ' \
+	| tr -d "\n"  | perl -lpe '$_=pack"H*",$_' >  $EMU_PARAM_DIR/tmp
 
 	# Make sure binary data packed is 256 bytes
-	dd if=$EMU_PARAM_DIR/temp1 of=$EMU_PARAM_DIR/$2 bs=1 skip=0 count=256
+	dd if=$EMU_PARAM_DIR/tmp of=$EMU_PARAM_DIR/$2 bs=1 skip=0 count=256
 
-	rm $EMU_PARAM_DIR/temp1 $EMU_PARAM_DIR/temp2
+	rm $EMU_PARAM_DIR/tmp
 }
 
 # $1 is the mst cable name
 # $2 is the output file name
 get_qsfp_temp() {
-	temp=$(mlxcables -d $1 | grep Temperature | cut -f 2 -d ":" | cut -f 2 -d " ")
+	temp=$(mlxlink -d $1 -m 2> /dev/null | grep Temperature | cut -f 2 -d ":" | tr -d " ")
 	if [ "$temp" != "N/A" ]; then
+		temp=$(echo "$temp" | awk -F'[^0-9]+' '{print $1}')
 		echo $temp > $EMU_PARAM_DIR/$2
 	else
 		remove_sensor "$2"
 	fi
 }
 
+# $1 is the full path of the ethernet or infiniband bdfs file
+update_cables_info()
+{
+	if [ -s $1 ]; then
+		while read bdf; do
+			# Get number of link and the link status
+			func=$(echo $bdf | cut -f 1 -d " " | cut -f 2 -d ".")
+			link_status=$(cat /sys/bus/pci/devices/0000\:$bdf/net/p$func/operstate)
+			# Update port link status
+			if [ "$link_status" = "up" ]; then
+					echo 1 > $EMU_PARAM_DIR/p$func"_link"
+			else
+					echo 2 > $EMU_PARAM_DIR/p$func"_link"
+			fi
+			mlxlink -d $bdf --cable --ddm > /dev/null 2>&1
+			# The port is connected
+			if [ $? -eq 0 ]; then	
+				### Get the temperature for QSFP the port ###
+				get_qsfp_temp $bdf "p${func}_temp"
+				### Update the qsfp eeprom fru
+				get_qsfp_eeprom_data $bdf "qsfp${func}_eeprom"
+			# The port is disconnect
+			else
+				remove_sensor "p${func}_temp"
+				echo "QSFP${func} EEPROM not detected" > $EMU_PARAM_DIR/qsfp${func}_eeprom
+				truncate -s 256 $EMU_PARAM_DIR/qsfp${func}_eeprom
+			fi
+		done <$EMU_PARAM_DIR/eth_bdfs.txt
+	fi
+}
 
 ##########################################################
 # Get connectX network interfaces information            #
@@ -418,6 +444,7 @@ fi
 
 #############################################################
 #   Get NIC VID, SVID, DID, SDID and get QSFP link status   #
+#  QSFP ports temperature and QSFP EEPROM data aka VPDs     #
 #############################################################
 # To get the NIC VID, SVID, DID and SDID, we use the pci dev
 # info (lspci). The pci bus number is set by the OS and is
@@ -426,6 +453,9 @@ fi
 # for the NIC pci. The NIC card can be associated with device
 # class 0200 if it is connected via pcie or class 0207 if it
 # is connected via infiniband.
+# If a port is not connected or if its temperature is reported as
+# "N/A" by FW, then the ipmitool command will display "no reading".
+
 lspci -n | grep 0200 | cut -f 1 -d " " > $EMU_PARAM_DIR/eth_bdfs.txt
 lspci -n | grep 0207 | cut -f 1 -d " " > $EMU_PARAM_DIR/ib_bdfs.txt
 
@@ -443,56 +473,18 @@ if [ ! -s $EMU_PARAM_DIR/eth_bdfs.txt ] && [ ! -s $EMU_PARAM_DIR/ib_bdfs.txt ]; 
 else
 	bdf_eth=$(head -n 1 $EMU_PARAM_DIR/eth_bdfs.txt)
 	bdf_ib=$(head -n 1 $EMU_PARAM_DIR/ib_bdfs.txt)
-	p0_changed=0
-	p1_changed=0
 
 	lspci -n -v -m -s $bdf_eth > $EMU_PARAM_DIR/nic_pci_dev_info 2>/dev/null
 	lspci -n -v -m -s $bdf_ib >> $EMU_PARAM_DIR/nic_pci_dev_info 2>/dev/null
 
 	truncate -s 100 $EMU_PARAM_DIR/nic_pci_dev_info
 
-	if [ -s $EMU_PARAM_DIR/eth_bdfs.txt ]; then
-		while read bdf; do
-			func=$(echo $bdf | cut -f 1 -d " " | cut -f 2 -d ".")
-			link_status=$(cat /sys/bus/pci/devices/0000\:$bdf/net/p$func/operstate)
+	update_cables_info $EMU_PARAM_DIR/eth_bdfs.txt
+	update_cables_info $EMU_PARAM_DIR/ib_bdfs.txt
 
-			if [ "$link_status" = "up" ]; then
-				if [ ! -f $EMU_PARAM_DIR/p$func"_link" ] || [ $(grep 2 $EMU_PARAM_DIR/p$func"_link") ]; then
-					eval "p${func}_changed=1"
-					echo 1 > $EMU_PARAM_DIR/p$func"_link"
-				fi
-			else
-				if [ ! -f $EMU_PARAM_DIR/p$func"_link" ] || [ $(grep 1 $EMU_PARAM_DIR/p$func"_link") ]; then
-					eval "p${func}_changed=1"
-					echo 2 > $EMU_PARAM_DIR/p$func"_link"
-				fi
-			fi
-		done <$EMU_PARAM_DIR/eth_bdfs.txt
-	fi
-
-	if [ -s $EMU_PARAM_DIR/ib_bdfs.txt ]; then
-		while read bdf; do
-			func=$(echo $bdf | cut -f 1 -d " " | cut -f 2 -d ".")
-			link_status=$(cat /sys/class/net/ib*$func/operstate)
-
-			if [ "$link_status" = "up" ]; then
-				if [ ! -f $EMU_PARAM_DIR/p$func"_link" ] || [ $(grep 2 $EMU_PARAM_DIR/p$func"_link") ]; then
-					eval "p${func}_changed=1"
-					echo 1 > $EMU_PARAM_DIR/p$func"_link"
-				fi
-			else
-				if [ ! -f $EMU_PARAM_DIR/p$func"_link" ] || [ $(grep 1 $EMU_PARAM_DIR/p$func"_link") ]; then
-					eval "p${func}_changed=1"
-					echo 2 > $EMU_PARAM_DIR/p$func"_link"
-				fi
-			fi
-		done <$EMU_PARAM_DIR/ib_bdfs.txt
-	fi
 fi
-
 rm -f $EMU_PARAM_DIR/eth_bdfs.txt
 rm -f $EMU_PARAM_DIR/ib_bdfs.txt
-
 
 ###################################
 #          Get FW info            #
@@ -553,54 +545,6 @@ get_fw_info() {
 
 	truncate -s 2000 $EMU_PARAM_DIR/fw_info
 }
-
-
-########################################################################
-#       Get QSFP ports temperature and QSFP EEPROM data aka VPDs       #
-########################################################################
-#
-# If a port is not connected or if its temperature is reported as
-# "N/A" by FW, then the ipmitool command will display "no reading".
-# The mlxcables command reports a temperature as N/A if the cable is not
-# an optics cable with a capacity of 25G or 100G.
-# Only try to detect the cables via "mst cable add" if the link status
-# has changed.
-
-if [ "$p0_changed" = "1" ] || [ "$p1_changed" = "1" ]; then
-	mst cable add
-fi
-if [ -f /dev/mst/*cable_0 ]; then
-	cable_0=$(ls /dev/mst/*cable_0 | cut -f 4 -d "/")
-
-	### Get the temperature for QSFP port0 ###
-	get_qsfp_temp $cable_0 "p0_temp"
-
-	# Only update the qsfp eeprom fru if the link status changed to up
-	if [ "$p0_changed" = "1" ]; then
-		get_qsfp_eeprom_data $cable_0 "qsfp0_eeprom"
-	fi
-else
-	remove_sensor "p0_temp"
-	echo "QSFP0 EEPROM not detected" > $EMU_PARAM_DIR/qsfp0_eeprom
-	truncate -s 256 $EMU_PARAM_DIR/qsfp0_eeprom
-fi
-
-if [ -f /dev/mst/*cable_1 ]; then
-	cable_1=$(ls /dev/mst/*cable_1 | cut -f 4 -d "/")
-
-	### Get the temperature for QSFP port1 ###
-	get_qsfp_temp $cable_1 "p1_temp"
-
-	# Only update the qsfp eeprom fru if the link status changed to up
-	if [ "$p1_changed" = "1" ]; then
-		get_qsfp_eeprom_data $cable_1 "qsfp1_eeprom"
-	fi
-else
-	remove_sensor "p1_temp"
-	echo "QSFP1 EEPROM not detected" > $EMU_PARAM_DIR/qsfp1_eeprom
-	truncate -s 256 $EMU_PARAM_DIR/qsfp1_eeprom
-fi
-
 
 ###################
 # DIMMs CE and UE #
