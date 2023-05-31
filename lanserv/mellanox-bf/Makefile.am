@@ -1,8 +1,17 @@
 AM_CFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/lanserv
+EXTRA_DIST = mlx-bf.lan.conf.in
+CLEANFILES = mlx-bf.lan.conf
+
 pkglib_LTLIBRARIES = mellanox_bf_mod.la
 
 mellanox_bf_mod_la_SOURCES = mellanox_bf_mod.c
 mellanox_bf_mod_la_LDFLAGS = -module
+
+noinst_DATA = mlx-bf.lan.conf
+
+#very dirty hack for supporting different pkglib paths depending on distro
+mlx-bf.lan.conf: $(srcdir)/mlx-bf.lan.conf.in
+	sed "s|@pkglib@|$(pkglibdir)|g" $(srcdir)/mlx-bf.lan.conf.in > $(srcdir)/mlx-bf.lan.conf
 
 install-data-local:
 	$(INSTALL) -m 755 -d "$(DESTDIR)$(localstatedir)/ipmi_sim/mellanox/"; \
