@@ -43,5 +43,5 @@ set_working_mc 0x30
 #  int ipmi_sim_module_init(sys_data_t *sys, char *initstr);
 # where initstr is the init string passed on the module load line.
 # It should return 0 on success or an errno no failure.
-loadlib "/usr/lib64/OpenIPMI/mellanox_bf_mod.so" ""
+loadlib "@pkglib@/mellanox_bf_mod.so" ""
 

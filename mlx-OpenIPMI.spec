@@ -40,6 +40,8 @@ Group: System Environment/Base
 Source: %{_name}-%{_version}.tar.gz
 BuildRoot: %{?build_root:%{build_root}}%{!?build_root:/var/tmp/OFED}
 Vendor: Mellanox Technologies
+BuildRequires: popt-devel
+BuildRequires: ncurses-devel
 Requires: rasdaemon
 Provides: OpenIPMI
 Provides: OpenIPMI-libs
@@ -66,7 +68,7 @@ make %{?_smp_mflags}
 
 %install
 %make_install
-
+rm -f %{buildroot}/usr/lib64/OpenIPMI/*.la %{buildroot}/usr/lib64/OpenIPMI/*.a
 
 %files
 %defattr(-,root,root,-)
@@ -105,10 +107,7 @@ make %{?_smp_mflags}
 /etc/logrotate.d/set_emu_param
 /etc/rsyslog.d/mlx_ipmid.conf
 /etc/rsyslog.d/set_emu_param.conf
-/usr/lib64/OpenIPMI/mellanox_bf_mod.a
-/usr/lib64/OpenIPMI/mellanox_bf_mod.so
-/usr/lib64/OpenIPMI/mellanox_bf_mod.so.0
-/usr/lib64/OpenIPMI/mellanox_bf_mod.so.0.0.0
+/usr/lib64/OpenIPMI/*.so*
 
 %changelog
 * Thu May 20 2021 Asmaa Mnebhi <asmaa@nvidia.com> - 2.0.25-3
