@@ -209,7 +209,7 @@ update_cables_info()
 				echo "QSFP${func} EEPROM not detected" > $EMU_PARAM_DIR/qsfp${func}_eeprom
 				truncate -s 256 $EMU_PARAM_DIR/qsfp${func}_eeprom
 			fi
-		done <$EMU_PARAM_DIR/eth_bdfs.txt
+		done < $1
 	fi
 }
 
