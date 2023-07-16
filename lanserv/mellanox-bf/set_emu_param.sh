@@ -245,8 +245,11 @@ get_connectx_net_info() {
 	echo "LAN Interface:" > $EMU_PARAM_DIR/eth$1
 	ifconfig $eth >> $EMU_PARAM_DIR/eth$1 2>/dev/null
 	if [ ! $? -eq 0 ]; then
-		# if this interface is not supported, delete FRU file
-		rm $EMU_PARAM_DIR/eth$1 2>/dev/null
+		# if this interface is not supported, update FRU file NA
+		echo "NA" > $EMU_PARAM_DIR/eth$1
+
+		# Pad the file with spaces in case the size of the temp files increases
+		truncate -s 3200 $EMU_PARAM_DIR/eth$1
 		return
 	fi
 	ethtool $eth | grep -i "speed" >> $EMU_PARAM_DIR/eth$1
