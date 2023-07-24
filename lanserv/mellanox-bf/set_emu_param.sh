@@ -97,10 +97,11 @@ if [ "$i2cbus" != "NONE" ]; then
 	
 	# load the ipmb_host driver, if installed in BF
 	is_ipmb_host_driver=false
-        if find /usr/lib/modules/ -name ipmb_host.ko -print -quit | grep -q .; then
+	
+    if find / -path "*/lib/modules/*" \( -name "ipmb_host.ko" -o -name "ipmb-host.ko" \) -print -quit | grep -q .; then
 		is_ipmb_host_driver=true
-        fi
-        if [ ! "$(lsmod | grep ipmb_host)" ] && $is_ipmb_host_driver; then
+    fi
+    if [ ! "$(lsmod | grep ipmb_host)" ] && $is_ipmb_host_driver; then
 		if [ "$bffamily" = "BlueSphere" ] || [ "$bffamily" = "PRIS" ] ||
 		   [ "$bffamily" = "Camelantis" ] || [ "$bffamily" = "Aztlan" ] ||
 		   [ "$bffamily" = "Dell-Camelantis" ] || [ "$bffamily" = "Roy" ] ||
