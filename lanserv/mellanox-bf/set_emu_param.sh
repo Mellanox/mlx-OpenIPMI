@@ -190,13 +190,20 @@ update_cables_info()
 		while read bdf; do
 			# Get number of link and the link status
 			func=$(echo $bdf | cut -f 1 -d " " | cut -f 2 -d ".")
-			link_status=$(cat /sys/bus/pci/devices/0000\:$bdf/net/p$func/operstate)
+			# Parse link status from mlxlink
+			link_status=$(mlxlink -d "$bdf" --cable --ddm | awk -F ":" '/State/{print $2}')
 			# Update port link status
-			if [ "$link_status" = "up" ]; then
-					echo 1 > $EMU_PARAM_DIR/p$func"_link"
-			else
-					echo 2 > $EMU_PARAM_DIR/p$func"_link"
-			fi
+			case "$link_status" in 
+				*Active*)
+				echo 1 > $EMU_PARAM_DIR/p$func"_link"
+				;;
+				*LinkUp*)
+				echo 1 > $EMU_PARAM_DIR/p$func"_link"
+				;;
+				*)
+				echo 2 > $EMU_PARAM_DIR/p$func"_link"
+				;;
+			esac
 			mlxlink -d $bdf --cable --ddm > /dev/null 2>&1
 			# The port is connected
 			if [ $? -eq 0 ]; then	
@@ -224,9 +231,11 @@ get_connectx_net_info() {
 	# udev renames the interfaces to enp*f* while on
 	# the SNIC, the connectX interfaces are renamed p0 and p1
 	# Make sure to parse out the VLAN interfaces as well. For ex: enp3s0f0np0.100
-	eth=$(ifconfig -a | grep "enp.*f$1" | cut -f 1 -d " " | cut -f 1 -d ":" | head -1 | cut -f 1 -d ".")
-	if [ -z $eth ]; then
-		eth=$(ifconfig -a | grep "ibp.*f$1" | cut -f 1 -d " " | cut -f 1 -d ":" | head -1 | cut -f 1 -d ".")
+	# Using 'ip -s link' command for consistency between different OSes
+        get_port_info_cmd="ip -s link"
+        eth=$($get_port_info_cmd | grep -o "enp.*f.*:" | head -1 | awk -F: '{print $1}')
+        if [ -z $eth ]; then
+                eth=$($get_port_info_cmd | grep -o "ib$1" | head -1)
 		if [ -z $eth ]; then
 			eth="p$1"
 		fi
