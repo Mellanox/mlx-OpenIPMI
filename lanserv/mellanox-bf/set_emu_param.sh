@@ -233,7 +233,7 @@ get_connectx_net_info() {
 	# Make sure to parse out the VLAN interfaces as well. For ex: enp3s0f0np0.100
 	# Using 'ip -s link' command for consistency between different OSes
         get_port_info_cmd="ip -s link"
-        eth=$($get_port_info_cmd | grep -o "enp.*f.*:" | head -1 | awk -F: '{print $1}')
+        eth=$($get_port_info_cmd | grep -o "enp.*f$1.*:" | head -1 | awk -F: '{print $1}')
         if [ -z $eth ]; then
                 eth=$($get_port_info_cmd | grep -o "ib$1" | head -1)
 		if [ -z $eth ]; then
