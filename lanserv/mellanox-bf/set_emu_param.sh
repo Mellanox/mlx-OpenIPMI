@@ -227,17 +227,24 @@ update_cables_info()
 # $1 is the original network name                        #
 ##########################################################
 get_connectx_net_info() {
+	# $1 is the ports index, $2 is bool- true if board has an Eth port and an IB port
 	# In the BlueWhale and other similar designs,
 	# udev renames the interfaces to enp*f* while on
 	# the SNIC, the connectX interfaces are renamed p0 and p1
 	# Make sure to parse out the VLAN interfaces as well. For ex: enp3s0f0np0.100
 	# Using 'ip -s link' command for consistency between different OSes
-        get_port_info_cmd="ip -s link"
-        eth=$($get_port_info_cmd | grep -o "enp.*f$1.*:" | head -1 | awk -F: '{print $1}')
-        if [ -z $eth ]; then
-                eth=$($get_port_info_cmd | grep -o "ib$1" | head -1)
-		if [ -z $eth ]; then
-			eth="p$1"
+	# When the board has 2 ports that one is IB and the other is ETH, IB port will have index '0'
+	get_port_info_cmd="ip -s link"
+	eth=$($get_port_info_cmd | grep -o "enp.*f$1.*:" | head -1 | awk -F: '{print $1}')
+	if [ -z "$eth" ]; then
+		eth=$($get_port_info_cmd | grep -o "ib$1" | head -1)
+		if [ -z "$eth" ]; then  
+			eth=$($get_port_info_cmd | grep -o "p$1" | head -1)
+			if $2 && [ -z "$eth" ]; then  
+				eth="ib0"
+			else
+				eth="p$1"
+			fi
 		fi
 	fi
 
@@ -253,8 +260,9 @@ get_connectx_net_info() {
 	fi
 
 	echo "LAN Interface:" > $EMU_PARAM_DIR/eth$1
-	ifconfig $eth >> $EMU_PARAM_DIR/eth$1 2>/dev/null
-	if [ ! $? -eq 0 ]; then
+	if ip link show dev $eth >> $EMU_PARAM_DIR/eth$1 2>/dev/null; then
+		sed -i 's/^[0-9]*: //' $EMU_PARAM_DIR/eth$1
+	else
 		# if this interface is not supported, update FRU file NA
 		echo "NA" > $EMU_PARAM_DIR/eth$1
 
@@ -578,9 +586,18 @@ fi
 # Update eth0 and eth1 files every 60 seconds
 
 if [ $(( $curr_time % 60 )) -eq 0 ]; then
+# eth_and_ib will be true if board has a Eth configured port and a IB configured port
+	eth_and_ib=false
+	if lspci -n | grep 0200 | cut -f 1 -d " " | grep -q .
+	then
+		if lspci -n | grep 0207 | cut -f 1 -d " " | grep -q .
+		then
+			eth_and_ib=true
+		fi
+	fi
 	# Get 100G network interfaces information
-	get_connectx_net_info "0"
-	get_connectx_net_info "1"
+	get_connectx_net_info "0" $eth_and_ib
+	get_connectx_net_info "1" $eth_and_ib
 fi
 truncate -s 3000 $EMU_PARAM_DIR/eth_hw_counters
 
