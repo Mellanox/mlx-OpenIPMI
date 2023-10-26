@@ -5,7 +5,6 @@
 # journalctl -u set_emu_param
 
 EMU_PARAM_DIR=/run/emu_param
-MAX_FRU_SIZE=8192
 
 if [ ! -d $EMU_PARAM_DIR ]; then
 	mkdir $EMU_PARAM_DIR
@@ -604,7 +603,7 @@ if [ "$t" = "$fru_timer" ]; then
 	###################################
 	lscpu > $EMU_PARAM_DIR/cpuinfo
 	cat /proc/cpuinfo >> $EMU_PARAM_DIR/cpuinfo
-	truncate -s $MAX_FRU_SIZE $EMU_PARAM_DIR/cpuinfo
+	truncate -s 5900 $EMU_PARAM_DIR/cpuinfo
 
 
 	##########################################
