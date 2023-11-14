@@ -21,4 +21,4 @@
 # $5 time interval for executing set_emu_param.sh in seconds.
 
 rm -f /run/log/mlx_ipmid.log
-/usr/bin/set_emu_param.sh $1 $2 $3 $4 $5
+/usr/bin/set_emu_param.sh $1 $2 $3 $4 $5 $6
