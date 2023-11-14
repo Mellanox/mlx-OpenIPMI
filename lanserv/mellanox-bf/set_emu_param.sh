@@ -21,6 +21,7 @@ support_ipmb=$2
 oob_ip=$3
 external_ddr=$4
 loop_period=$5
+bf_version=$6
 
 # This timer is used to update the FRUs
 # once every hour. It also informs the user
@@ -65,6 +66,8 @@ IPMB_HOST_ADD=0x1011
 # ipmb_host driver is not installed in all images
 IPMB_HOST_CLIENTADDR=0x10
 
+BF2_PLATFORM_ID=0x00000214
+
 if [ "$bffamily" = "Bluewhale" ]; then
 	i2cbus=2
 elif [ "$bffamily" = "BlueSphere" ] || [ "$bffamily" = "PRIS" ] ||
@@ -101,12 +104,18 @@ if [ "$i2cbus" != "NONE" ]; then
     if find / -path "*/lib/modules/*" \( -name "ipmb_host.ko" -o -name "ipmb-host.ko" \) -print -quit | grep -q .; then
 		is_ipmb_host_driver=true
     fi
+	# The BMC is slower than DPU to be ready on BF2 and BF1.
+	# The BMC is faster than DPU to be ready on BF3.
+	# Currently we want to keep the delay for BF2 and BF1.
+	# As the bf_family name of Roy and Roy-B are the same for BF2 and BF3,
+	# We need to check it is Roy or Roy-B according to the platform ID.
+	# The bf_version is used to distinguish the "Roy" and "Roy-B".
+	# Roy-B doesn't need the delay of loading the driver.
     if [ ! "$(lsmod | grep ipmb_host)" ] && $is_ipmb_host_driver; then
 		if [ "$bffamily" = "BlueSphere" ] || [ "$bffamily" = "PRIS" ] ||
 		   [ "$bffamily" = "Camelantis" ] || [ "$bffamily" = "Aztlan" ] ||
-		   [ "$bffamily" = "Dell-Camelantis" ] || [ "$bffamily" = "Roy" ] ||
-		   [ "$bffamily" = "El-Dorado" ]  || [ "$bffamily" = "Moonraker" ] ||
-                   [ "$bffamily" = "Goldeneye" ]; then
+		   [ "$bffamily" = "Dell-Camelantis" ] || [ "$bffamily" = "El-Dorado" ] ||
+		   ([ "$bffamily" = "Roy" ] && [ "$bf_version" = $BF2_PLATFORM_ID ]); then
 			# Load the driver 2.5mn after boot to give the BMC time
 			# to get ready for IPMB transactions.
 			if [ "$curr_time" -ge 150 ]; then
