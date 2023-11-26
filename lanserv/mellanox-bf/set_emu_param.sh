@@ -269,9 +269,8 @@ get_connectx_net_info() {
 	fi
 
 	echo "LAN Interface:" > $EMU_PARAM_DIR/eth$1
-	if ip link show dev $eth >> $EMU_PARAM_DIR/eth$1 2>/dev/null; then
-		sed -i 's/^[0-9]*: //' $EMU_PARAM_DIR/eth$1
-	else
+	ifconfig $eth >> $EMU_PARAM_DIR/eth$1 2>/dev/null
+	if [ ! $? -eq 0 ]; then
 		# if this interface is not supported, update FRU file NA
 		echo "NA" > $EMU_PARAM_DIR/eth$1
 
