@@ -14,6 +14,7 @@ fi
 # BlueField through the ip_addresses files.
 if [ ! -s  $EMU_PARAM_DIR/ip_addresses ]; then
 	touch $EMU_PARAM_DIR/ip_addresses
+	truncate -s 61 $EMU_PARAM_DIR/ip_addresses
 fi
 
 bffamily=$1

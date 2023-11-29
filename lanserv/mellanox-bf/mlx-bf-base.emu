@@ -92,7 +92,6 @@ sensor_add 0x30 0 8 0x1b 0x6f	\
 # If the BMC address is 11.22.33.44, it needs to be passed
 # as shown above to keep the 61 byte file size.
 #
-mc_add_fru_data 0x30 11 61 file 0 "/run/emu_param/ip_addresses"
 
 #The following is a marker for the set_emu_param.sh file to remove and initialize
 #fru files' length.
@@ -108,6 +107,7 @@ mc_add_fru_data 0x30 7 512 file 0 "/run/emu_param/ddr1_1_spd"
 mc_add_fru_data 0x30 8 2000 file 0 "/run/emu_param/emmc_info"
 mc_add_fru_data 0x30 9 256 file 0 "/run/emu_param/qsfp0_eeprom"
 mc_add_fru_data 0x30 10 256 file 0 "/run/emu_param/qsfp1_eeprom"
+mc_add_fru_data 0x30 11 61 file 0 "/run/emu_param/ip_addresses"
 mc_add_fru_data 0x30 12 303 file 0 "/run/emu_param/dimms_ce_ue"
 mc_add_fru_data 0x30 13 3200 file 0 "/run/emu_param/eth0"
 mc_add_fru_data 0x30 14 3200 file 0 "/run/emu_param/eth1"
