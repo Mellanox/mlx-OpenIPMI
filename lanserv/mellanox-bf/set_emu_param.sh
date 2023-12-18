@@ -271,7 +271,10 @@ get_connectx_net_info() {
 
 	echo "LAN Interface:" > $EMU_PARAM_DIR/eth$1
 	ifconfig $eth >> $EMU_PARAM_DIR/eth$1 2>/dev/null
-	if [ ! $? -eq 0 ]; then
+	# Getting output from both ifconfig and ip for compatibility with older BMC versions
+	if ip link show dev $eth >> $EMU_PARAM_DIR/eth$1 2>/dev/null; then
+		sed -i 's/^[0-9]*: //' $EMU_PARAM_DIR/eth$1
+	else
 		# if this interface is not supported, update FRU file NA
 		echo "NA" > $EMU_PARAM_DIR/eth$1
 
