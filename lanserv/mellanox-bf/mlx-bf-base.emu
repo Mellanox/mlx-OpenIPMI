@@ -99,7 +99,7 @@ sensor_add 0x30 0 8 0x1b 0x6f	\
 mc_add_fru_data 0x30 0 6 file 0 "/run/emu_param/ipmb_update_timer"
 mc_add_fru_data 0x30 1 2000 file 0 "/run/emu_param/fw_info"
 mc_add_fru_data 0x30 2 100 file 0 "/run/emu_param/nic_pci_dev_info"
-mc_add_fru_data 0x30 3 5900 file 0 "/run/emu_param/cpuinfo"
+mc_add_fru_data 0x30 3 6200 file 0 "/run/emu_param/cpuinfo"
 mc_add_fru_data 0x30 4 512 file 0 "/run/emu_param/ddr0_0_spd"
 mc_add_fru_data 0x30 5 512 file 0 "/run/emu_param/ddr0_1_spd"
 mc_add_fru_data 0x30 6 512 file 0 "/run/emu_param/ddr1_0_spd"
