@@ -632,7 +632,7 @@ if [ "$t" = "$fru_timer" ]; then
 	###################################
 	lscpu > $EMU_PARAM_DIR/cpuinfo
 	cat /proc/cpuinfo >> $EMU_PARAM_DIR/cpuinfo
-	truncate -s 5900 $EMU_PARAM_DIR/cpuinfo
+	truncate -s 6200 $EMU_PARAM_DIR/cpuinfo
 
 
 	##########################################
