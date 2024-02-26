@@ -234,34 +234,44 @@ update_cables_info()
 ##########################################################
 # Get connectX network interfaces information            #
 #                                                        #
-# $1 is the original network name                        #
+# $1 is the port's index                                 #
+# $2 is bool- true if board has both Eth port and IB port#
+# $3 is the file name that will save port's information  #
 ##########################################################
 get_connectx_net_info() {
-	# $1 is the ports index, $2 is bool- true if board has an Eth port and an IB port
 	# In the BlueWhale and other similar designs,
 	# udev renames the interfaces to enp*f* while on
 	# the SNIC, the connectX interfaces are renamed p0 and p1
 	# Make sure to parse out the VLAN interfaces as well. For ex: enp3s0f0np0.100
 	# Using 'ip -s link' command for consistency between different OSes
 	# When the board has 2 ports that one is IB and the other is ETH, IB port will have index '0'
+	file_name="$3"
 	get_port_info_cmd="ip -s link"
-	eth=$($get_port_info_cmd | grep -o "enp.*f$1.*:" | head -1 | awk -F: '{print $1}')
-	if [ -z "$eth" ]; then
-		eth=$($get_port_info_cmd | grep -o "ib$1" | head -1)
-		if [ -z "$eth" ]; then  
-			eth=$($get_port_info_cmd | grep -o "p$1" | head -1)
-			if $2 && [ -z "$eth" ]; then  
-				eth="ib0"
-			else
-				eth="p$1"
+	if [ "$file_name" != "oob" ]; then
+		# Looking for the port name in the output of the ip command
+		eth=$($get_port_info_cmd | grep -o "enp.*f$1.*:" | head -1 | awk -F: '{print $1}')
+		if [ -z "$eth" ]; then
+			eth=$($get_port_info_cmd | grep -o "ib$1" | head -1)
+			if [ -z "$eth" ]; then  
+				eth=$($get_port_info_cmd | grep -o "p$1" | head -1)
+				if $2 && [ -z "$eth" ]; then  
+					eth="ib0"
+				else
+					eth="p$1"
+				fi
 			fi
 		fi
+	else
+		# file name given is "oob"
+		eth=$($get_port_info_cmd | grep -o "oob_net$1" | head -1)
 	fi
 
-	if [ "$1" = "0" ]; then
-		echo "LAN interface: $eth" > $EMU_PARAM_DIR/eth_hw_counters
-	else
-		echo "LAN interface: $eth" >> $EMU_PARAM_DIR/eth_hw_counters
+	if [ "$file_name" != "oob" ]; then
+		if [ "$1" = "0" ]; then
+			echo "LAN interface: $eth" > $EMU_PARAM_DIR/eth_hw_counters
+		else
+			echo "LAN interface: $eth" >> $EMU_PARAM_DIR/eth_hw_counters
+		fi
 	fi
 
 	if [ -d /sys/class/infiniband/mlx5_$1/ports/1/hw_counters ]; then
@@ -269,23 +279,23 @@ get_connectx_net_info() {
 		grep '' * >> $EMU_PARAM_DIR/eth_hw_counters
 	fi
 
-	echo "LAN Interface:" > $EMU_PARAM_DIR/eth$1
-	ifconfig $eth >> $EMU_PARAM_DIR/eth$1 2>/dev/null
+	echo "LAN Interface:" > $EMU_PARAM_DIR/$file_name$1
+	ifconfig $eth >> $EMU_PARAM_DIR/$file_name$1 2>/dev/null
 	# Getting output from both ifconfig and ip for compatibility with older BMC versions
-	if ip link show dev $eth >> $EMU_PARAM_DIR/eth$1 2>/dev/null; then
-		sed -i 's/^[0-9]*: //' $EMU_PARAM_DIR/eth$1
+	if ip link show dev $eth >> $EMU_PARAM_DIR/$file_name$1 2>/dev/null; then
+		sed -i 's/^[0-9]*: //' $EMU_PARAM_DIR/$file_name$1
 	else
 		# if this interface is not supported, update FRU file NA
-		echo "NA" > $EMU_PARAM_DIR/eth$1
+		echo "NA" > $EMU_PARAM_DIR/$file_name$1
 
 		# Pad the file with spaces in case the size of the temp files increases
-		truncate -s 3200 $EMU_PARAM_DIR/eth$1
+		truncate -s 3200 $EMU_PARAM_DIR/$file_name$1
 		return
 	fi
-	ethtool $eth | grep -i "speed" >> $EMU_PARAM_DIR/eth$1
+	ethtool $eth | grep -i "speed" >> $EMU_PARAM_DIR/$file_name$1
 
 	# Get gateway
-	ip r | grep default | grep "dev $eth" >> $EMU_PARAM_DIR/eth$1
+	ip r | grep default | grep "dev $eth" >> $EMU_PARAM_DIR/$file_name$1
 
 	isdhcp=false
 
@@ -307,9 +317,9 @@ get_connectx_net_info() {
 		fi
 
 		if $isdhcp ; then
-			echo "IPv4 Address Origin: DHCP" >> $EMU_PARAM_DIR/eth$1
+			echo "IPv4 Address Origin: DHCP" >> $EMU_PARAM_DIR/$file_name$1
 		else
-			echo "IPv4 Address Origin: Static" >> $EMU_PARAM_DIR/eth$1
+			echo "IPv4 Address Origin: Static" >> $EMU_PARAM_DIR/$file_name$1
 		fi
 	fi
 
@@ -333,19 +343,19 @@ get_connectx_net_info() {
 		fi
 
 		if $isdhcp ; then
-			echo "IPv6 Address Origin: DHCP" >> $EMU_PARAM_DIR/eth$1
+			echo "IPv6 Address Origin: DHCP" >> $EMU_PARAM_DIR/$file_name$1
 		else
-			echo "IPv6 Address Origin: Static" >> $EMU_PARAM_DIR/eth$1
+			echo "IPv6 Address Origin: Static" >> $EMU_PARAM_DIR/$file_name$1
 		fi
 	fi
 
 	data="prio|rx_symbol_err_phy|rx_pcs_symbol_err_phy|rx_crc_errors_phy"
 	data+="|rx_corrected_bits_phy|[rt]x_pause_ctrl"
-	ethtool -S $eth | grep -E $data >> $EMU_PARAM_DIR/eth$1
-	echo "End LAN Interface" >> $EMU_PARAM_DIR/eth$1
+	ethtool -S $eth | grep -E $data >> $EMU_PARAM_DIR/$file_name$1
+	echo "End LAN Interface" >> $EMU_PARAM_DIR/$file_name$1
 
 	# Pad the file with spaces in case the size of the temp files increases
-	truncate -s 3200 $EMU_PARAM_DIR/eth$1
+	truncate -s 3200 $EMU_PARAM_DIR/$file_name$1
 }
 
 
@@ -600,8 +610,9 @@ if [ $(( $curr_time % 60 )) -eq 0 ]; then
 		fi
 	fi
 	# Get 100G network interfaces information
-	get_connectx_net_info "0" $eth_and_ib
-	get_connectx_net_info "1" $eth_and_ib
+	get_connectx_net_info "0" $eth_and_ib "eth" # Data port in index 0
+	get_connectx_net_info "1" $eth_and_ib "eth" # Data port in index 1 (if exists)
+	get_connectx_net_info "0" false "oob"       # Out-Of-Band port in index 0
 fi
 truncate -s 3000 $EMU_PARAM_DIR/eth_hw_counters
 
