@@ -756,3 +756,15 @@ sdr type 0x11
 	fru_entity_instance	3
 	id_string		"eth_hw_counters"
 endsdr
+
+sdr type 0x11
+	device_access_address	0x30
+	fru_device_address	17
+	logical_fru		1
+	lun			0
+	device_type		0x10
+	device_type_modifier	0
+	fru_entity_id		other
+	fru_entity_instance	3
+	id_string		"oob0"
+endsdr

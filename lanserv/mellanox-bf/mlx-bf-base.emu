@@ -113,4 +113,5 @@ mc_add_fru_data 0x30 13 3200 file 0 "/run/emu_param/eth0"
 mc_add_fru_data 0x30 14 3200 file 0 "/run/emu_param/eth1"
 mc_add_fru_data 0x30 15 64 file 0 "/run/emu_param/bf_uid"
 mc_add_fru_data 0x30 16 3000 file 0 "/run/emu_param/eth_hw_counters"
+mc_add_fru_data 0x30 17 3200 file 0 "/run/emu_param/oob0"
 mc_enable 0x30
