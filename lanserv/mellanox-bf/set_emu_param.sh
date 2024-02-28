@@ -510,7 +510,7 @@ else
 	lspci -n -v -m -s $bdf_eth > $EMU_PARAM_DIR/nic_pci_dev_info 2>/dev/null
 	lspci -n -v -m -s $bdf_ib >> $EMU_PARAM_DIR/nic_pci_dev_info 2>/dev/null
 
-	truncate -s 100 $EMU_PARAM_DIR/nic_pci_dev_info
+	truncate -s 200 $EMU_PARAM_DIR/nic_pci_dev_info
 
 	update_cables_info $EMU_PARAM_DIR/eth_bdfs.txt
 	update_cables_info $EMU_PARAM_DIR/ib_bdfs.txt
@@ -533,19 +533,11 @@ get_fw_info() {
 	BlueField OFED Version: $(ofed_info -s | sed 's/.$//')
 	EOF
 
-	if [ $bdf_eth ]; then
-		cat <<- EOF >> $EMU_PARAM_DIR/fw_info
-		vpd info:
-		$(lspci -vvv -s $bdf_eth | sed -n "/Vital/,/End/p")
-		EOF
-	elif [ $bdf_ib ]; then
-		cat <<- EOF >> $EMU_PARAM_DIR/fw_info
-		vpd info:
-		$(lspci -vvv -s $bdf_ib | sed -n "/Vital/,/End/p")
-		EOF
-	else
-		echo "Unable to get VPD info" >> $EMU_PARAM_DIR/fw_info
-	fi
+	# Get VPD info
+	cat <<- EOF >> $EMU_PARAM_DIR/fw_info
+	vpd info:
+	$(mlxvpd -d /dev/mst/mt*_pciconf0)
+	EOF
 
 	if [ -d /sys/class/infiniband/mlx*_0 ]; then
 		port=0
