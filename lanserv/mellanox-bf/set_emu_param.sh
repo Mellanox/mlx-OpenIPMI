@@ -623,6 +623,11 @@ truncate -s 3000 $EMU_PARAM_DIR/eth_hw_counters
 # - Some users need enough time to retrieve FRUs via ipmitool raw command.
 # So only update it once every hour.
 if [ "$t" = "$fru_timer" ]; then
+	###################################
+	#        Get the fru info         #
+	###################################
+	flint -d /dev/mst/mt*_pciconf0 q full > $EMU_PARAM_DIR/bf_fru
+	truncate -s 1280 $EMU_PARAM_DIR/bf_fru
 
 	###################################
 	#        Get the fw info          #
