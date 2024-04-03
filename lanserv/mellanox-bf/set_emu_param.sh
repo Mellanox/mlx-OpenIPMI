@@ -231,6 +231,19 @@ update_cables_info()
 	fi
 }
 
+# Getting Link Interface data using nmcli command.
+get_port_data() {
+    port_name="$1"
+    file_index="$2"  
+    file_name="$3"
+    file_path="$EMU_PARAM_DIR/$file_name$file_index"
+
+    # Fetch the device's connected/unmanaged status and prepare the message
+    status_line=$(nmcli -t -f DEVICE,STATE device status | grep "$port_name")
+
+    echo "$status_line" >> "$file_path"
+}
+
 ##########################################################
 # Get connectX network interfaces information            #
 #                                                        #
@@ -292,6 +305,7 @@ get_connectx_net_info() {
 		truncate -s 3200 $EMU_PARAM_DIR/$file_name$1
 		return
 	fi
+	get_port_data "$eth" "$1" "$file_name"
 	ethtool $eth | grep -i "speed" >> $EMU_PARAM_DIR/$file_name$1
 
 	# Get gateway
