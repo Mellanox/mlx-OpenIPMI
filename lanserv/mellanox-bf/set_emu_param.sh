@@ -82,6 +82,44 @@ else
 fi
 
 I2C_NEW_DEV=/sys/bus/i2c/devices/i2c-$i2cbus/new_device
+I2C_DEL_DEV=/sys/bus/i2c/devices/i2c-$i2cbus/delete_device
+# The IPMB_HOST_FLAG is created if the ipmb-host driver is loaded by the BMC
+# using ipmi oem command: ipmitool -I ipmb raw 0x2e 0x2 0x47 0x16 0x0
+# This flag is cleared after reboot the DPU.
+IPMB_HOST_FLAG=/run/emu_param/ipmb_host_driver_loaded
+# The IPMB_RETRY_FLAG is created if the host driver is needed to be reloaded.
+# This flag is cleared after reboot the DPU or successful retry.
+IPMB_RETRY_FLAG=/run/emu_param/ipmb_host_driver_retry
+
+load_ipmb_host() {
+	# There is a corner case that the ipmb-host driver can be loaded by this
+	# script and BMC at the same time. The handshake could be interrupted
+	# and cause the driver panic.
+	# If IPMB_HOST_FLAG exists on the system, that means the ipmb-host driver
+	# is loaded by BMC and the BMC is ready to do the handshake with DPU, there
+	# is no need to load it again. The script should check this flag before
+	# loading the ipmb-host to avoid the ipmi-host is loading or loaded by the
+	# BMC.
+	if [ ! -f $IPMB_HOST_FLAG ]; then
+		# The script should create this flag to avoid the BMC try to load the
+		# driver when the script is loading it.
+		touch $IPMB_HOST_FLAG
+		modprobe ipmb_host slave_add=$IPMB_HOST_CLIENTADDR
+		echo ipmb-host $IPMB_HOST_ADD > $I2C_NEW_DEV
+		# The script should remove this flag to avoid the BMC can't reload the
+		# driver after BMC boot up.
+		rm $IPMB_HOST_FLAG
+	fi
+}
+
+remove_ipmb_host() {
+	if [ ! -f $IPMB_HOST_FLAG ]; then
+		touch $IPMB_HOST_FLAG
+		echo $IPMB_HOST_ADD > $I2C_DEL_DEV
+		rmmod ipmb_host
+		rm $IPMB_HOST_FLAG
+	fi
+}
 
 if [ "$i2cbus" != "NONE" ]; then
 	# Instantiate the ipmb-dev device
@@ -120,12 +158,30 @@ if [ "$i2cbus" != "NONE" ]; then
 			# Load the driver 2.5mn after boot to give the BMC time
 			# to get ready for IPMB transactions.
 			if [ "$curr_time" -ge 150 ]; then
-				modprobe ipmb_host slave_add=$IPMB_HOST_CLIENTADDR
-				echo ipmb-host $IPMB_HOST_ADD > $I2C_NEW_DEV
+				load_ipmb_host
+				ipmitool mc info > /dev/null 2>&1
+				if [ ! $? -eq 0 ]; then
+					touch $IPMB_RETRY_FLAG
+				fi
 			fi
 		else
-			modprobe ipmb_host slave_add=$IPMB_HOST_CLIENTADDR
-			echo ipmb-host $IPMB_HOST_ADD > $I2C_NEW_DEV
+			load_ipmb_host
+			ipmitool mc info > /dev/null 2>&1
+			if [ ! $? -eq 0 ]; then
+				touch $IPMB_RETRY_FLAG
+			fi
+		fi
+	fi
+	# The i2c bus between BMC and DPU could be overused and susceptible to be busy.
+	# Retry every 6mn after boot if the driver fails to load.
+	if [ -f $IPMB_RETRY_FLAG ]; then
+		if [ $(( $t % 6 )) -eq 0 ] && [ "$curr_time" -ge 300 ]; then
+			remove_ipmb_host
+			load_ipmb_host
+			ipmitool mc info > /dev/null 2>&1
+			if [ $? -eq 0 ]; then
+				rm $IPMB_RETRY_FLAG
+			fi
 		fi
 	fi
 fi #support_ipmb
