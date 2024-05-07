@@ -367,56 +367,43 @@ get_connectx_net_info() {
 	# Get gateway
 	ip r | grep default | grep "dev $eth" >> $EMU_PARAM_DIR/$file_name$1
 
-	isdhcp=false
+	# Get the connection name
+	connection_name=$(nmcli -g GENERAL.CONNECTION dev show $eth)
 
-	# Check if IPv4 address is assigned
-	ifconfig $eth | grep "inet "
+	# Check if IPv4 address is assigned and is not a link local address
+	ifconfig $eth | grep "inet " | grep -v " 169.254."
 	if [ $? -eq 0 ]; then
 
-		# On Yocto and Ubuntu
-		file=$(networkctl status -a  | grep $eth -A 2 | grep "Network File" | cut -d ":" -f 2)
-		grep "DHCP=yes" $file > /dev/null 2>&1
-		if [ $? -eq 0 ]; then
-			isdhcp=true
-		fi
+		# Check IPv4 connection type
+		file=$(nmcli -g ipv4.method con show $connection_name)
 
-		# On CentOS
-		grep "BOOTPROTO=dhcp" /etc/sysconfig/network-scripts/ifcfg-$eth > /dev/null 2>&1
-		if [ $? -eq 0 ]; then
-			isdhcp=true
-		fi
-
-		if $isdhcp ; then
+		if [ "$file" = "auto" ]; then
 			echo "IPv4 Address Origin: DHCP" >> $EMU_PARAM_DIR/$file_name$1
-		else
+		elif [ "$file" = "manual" ]; then
 			echo "IPv4 Address Origin: Static" >> $EMU_PARAM_DIR/$file_name$1
+		else
+			echo "IPv4 Address Origin: LinkLocal" >> $EMU_PARAM_DIR/$file_name$1
 		fi
+	else
+		echo "IPv4 Address Origin: LinkLocal" >> $EMU_PARAM_DIR/$file_name$1
 	fi
 
-	isdhcp=false
-
 	# Check if IPv6 address is assigned and is not a link local address
-	ifconfig $eth | grep "inet6 " | grep -v "fe80"
+	ifconfig $eth | grep "inet6 " | grep -v " fe80::"
 	if [ $? -eq 0 ]; then
 
-		# On Yocto and Ubuntu
-		file=$(networkctl status -a  | grep $eth -A 2 | grep "Network File" | cut -d ":" -f 2)
-		grep "DHCP=yes" $file > /dev/null 2>&1
-		if [ $? -eq 0 ]; then
-			isdhcp=true
-		fi
+		# Check IPv6 connection type
+		file=$(nmcli -g ipv6.method con show $connection_name)
 
-		# On CentOS
-		grep "DHCPV6C" /etc/sysconfig/network-scripts/ifcfg-$eth > /dev/null 2>&1
-		if [ $? -eq 0 ]; then
-			isdhcp=true
-		fi
-
-		if $isdhcp ; then
+		if [ "$file" = "auto" ]; then
 			echo "IPv6 Address Origin: DHCP" >> $EMU_PARAM_DIR/$file_name$1
-		else
+		elif [ "$file" = "manual" ]; then
 			echo "IPv6 Address Origin: Static" >> $EMU_PARAM_DIR/$file_name$1
+		else
+			echo "IPv6 Address Origin: LinkLocal" >> $EMU_PARAM_DIR/$file_name$1
 		fi
+	else
+		echo "IPv6 Address Origin: LinkLocal" >> $EMU_PARAM_DIR/$file_name$1
 	fi
 
 	data="prio|rx_symbol_err_phy|rx_pcs_symbol_err_phy|rx_crc_errors_phy"
