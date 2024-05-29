@@ -28,6 +28,8 @@ install-data-local:
 	$(INSTALL) -m 644 $(srcdir)/mlx-bf1.emu "$(DESTDIR)$(sysconfdir)/ipmi/"; \
 	$(INSTALL) -m 644 $(srcdir)/mlx-bf2.emu "$(DESTDIR)$(sysconfdir)/ipmi/"; \
 	$(INSTALL) -m 644 $(srcdir)/mlx-bf3.emu "$(DESTDIR)$(sysconfdir)/ipmi/"; \
+	$(INSTALL) -m 644 $(srcdir)/fru_type/config_type_0.sh "$(DESTDIR)$(sysconfdir)/ipmi/"; \
+	$(INSTALL) -m 644 $(srcdir)/fru_type/config_type_1.sh  "$(DESTDIR)$(sysconfdir)/ipmi/"; \
 	$(INSTALL) -m 755 $(srcdir)/progconf "$(DESTDIR)$(sysconfdir)/ipmi/"; \
 	$(INSTALL) -m 644 $(srcdir)/mlx_ipmid.service "$(DESTDIR)/lib/systemd/system/"; \
 	$(INSTALL) -m 755 -d "$(DESTDIR)/run/log/"; \

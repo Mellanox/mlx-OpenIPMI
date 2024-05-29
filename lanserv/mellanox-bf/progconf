@@ -4,3 +4,4 @@ LOOP_PERIOD=60
 BF_FAMILY=$(/usr/bin/bffamily | tr -d '[:space:]')
 BF_VERSION=$(bfhcafw mcra 0xf0014.0:16)
 OOB_IP="0"
+FRU_TYPE="0"

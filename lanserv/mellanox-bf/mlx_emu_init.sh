@@ -16,3 +16,11 @@ elif  [ "$bfversion" = $BF3_PLATFORM_ID ]; then
 elif  [ "$bfversion" = $BF1_PLATFORM_ID ]; then
    ln -sf /etc/ipmi/mlx-bf1.emu /etc/ipmi/mlx-bf.emu
 fi
+
+fru_type=$1
+if [ "$fru_type" = "1" ]; then
+   ln -sf /etc/ipmi/config_type_1.sh /etc/ipmi/config_type.sh
+#default configuration
+else 
+   ln -sf /etc/ipmi/config_type_0.sh /etc/ipmi/config_type.sh
+fi
