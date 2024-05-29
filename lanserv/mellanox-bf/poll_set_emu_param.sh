@@ -11,6 +11,6 @@
 # example: "0x0000021c" for Bluefield-3.
 
 while /bin/true; do
-	/usr/bin/set_emu_param.sh $2 $3 $4 $5 $1 $6
+	/usr/bin/set_emu_param.sh $2 $3 $4 $5 $1 $6 $7
 	sleep $1
 done
