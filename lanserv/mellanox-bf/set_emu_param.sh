@@ -252,7 +252,35 @@ get_qsfp_temp() {
 		remove_sensor "$2"
 	fi
 }
-
+# $1 is the full path of the ethernet or infiniband bdfs file
+# $2 is a boolean to check if the port is disabled
+get_qsfp_status()
+{
+	bdf=$1
+	# Parse link status from mlxlink
+	link_status=$(mlxlink -d "$bdf" --cable --ddm | awk -F ":" '/State/{print $2}')
+	# If check if the port is disabled is true
+	if [ $2 ]; then
+		# Check if the port is disabled
+		case "$link_status" in 
+        	*Disable*)
+        	return 0
+        	;;
+		esac
+	fi
+	# Update port link status
+	case "$link_status" in 
+		*Active*)
+		return 1
+		;;
+		*LinkUp*)
+		return 1
+		;;
+		*)
+		return 2
+		;;
+	esac
+}
 # $1 is the full path of the ethernet or infiniband bdfs file
 update_cables_info()
 {
@@ -260,20 +288,9 @@ update_cables_info()
 		while read bdf; do
 			# Get number of link and the link status
 			func=$(echo $bdf | cut -f 1 -d " " | cut -f 2 -d ".")
-			# Parse link status from mlxlink
-			link_status=$(mlxlink -d "$bdf" --cable --ddm | awk -F ":" '/State/{print $2}')
-			# Update port link status
-			case "$link_status" in 
-				*Active*)
-				echo 1 > $EMU_PARAM_DIR/p$func"_link"
-				;;
-				*LinkUp*)
-				echo 1 > $EMU_PARAM_DIR/p$func"_link"
-				;;
-				*)
-				echo 2 > $EMU_PARAM_DIR/p$func"_link"
-				;;
-			esac
+			get_qsfp_status $bdf
+			link_status=$?
+			echo $link_status > $EMU_PARAM_DIR/p$func"_link"
 			mlxlink -d $bdf --cable --ddm > /dev/null 2>&1
 			# The port is connected
 			if [ $? -eq 0 ]; then	
@@ -310,6 +327,7 @@ get_port_data() {
 # $1 is the port's index                                 #
 # $2 is bool- true if board has both Eth port and IB port#
 # $3 is the file name that will save port's information  #
+# $4 is the file name that will save the bdf information #
 ##########################################################
 get_connectx_net_info() {
 	# In the BlueWhale and other similar designs,
@@ -365,7 +383,24 @@ get_connectx_net_info() {
 		truncate -s 3200 $EMU_PARAM_DIR/$file_name$1
 		return
 	fi
-	get_port_data "$eth" "$1" "$file_name"
+	if [ "$file_name" != "oob" ]; then
+		get_port_data "$eth" "$1" "$file_name"
+		if [ -s $4 ]; then
+			bdf=$(grep "\.$1\$" "$4")
+			if [ -n "$bdf" ]; then
+				get_qsfp_status $bdf true
+				link_status=$?
+				if [ "$link_status" -eq 0 ]; then
+					echo "LinkStatus: DOWN" >> $EMU_PARAM_DIR/$file_name$1
+				else
+					echo "LinkStatus: UP" >> $EMU_PARAM_DIR/$file_name$1
+
+				fi
+			else
+				echo "LinkStatus: DOWN" >> $EMU_PARAM_DIR/$file_name$1
+			fi
+		fi
+	fi
 	ethtool $eth | grep -i "speed" >> $EMU_PARAM_DIR/$file_name$1
 
 	# Get gateway
@@ -587,8 +622,7 @@ else
 	update_cables_info $EMU_PARAM_DIR/ib_bdfs.txt
 
 fi
-rm -f $EMU_PARAM_DIR/eth_bdfs.txt
-rm -f $EMU_PARAM_DIR/ib_bdfs.txt
+
 
 ###################################
 #          Get FW info            #
@@ -654,6 +688,17 @@ if [ $(( $curr_time % 10 )) -eq 0 ]; then
   truncate -s 303 $EMU_PARAM_DIR/dimms_ce_ue
 fi
 
+# Function to determine the BDF file based on the port number
+get_bdf_file() {
+    port=$1
+    bdf_file="$EMU_PARAM_DIR/eth_bdfs.txt"
+	# If PCI device ends with the port's number
+    if grep "\.${port}\$" "$EMU_PARAM_DIR/ib_bdfs.txt" > /dev/null; then
+        bdf_file="$EMU_PARAM_DIR/ib_bdfs.txt"
+    fi
+
+    echo "$bdf_file"
+}
 
 ###################################
 # Create ConnectX interfaces FRUs #
@@ -670,12 +715,17 @@ if [ $(( $curr_time % 60 )) -eq 0 ]; then
 			eth_and_ib=true
 		fi
 	fi
+	file_0=$(get_bdf_file 0)
+	file_1=$(get_bdf_file 1)
 	# Get 100G network interfaces information
-	get_connectx_net_info "0" $eth_and_ib "eth" # Data port in index 0
-	get_connectx_net_info "1" $eth_and_ib "eth" # Data port in index 1 (if exists)
+	get_connectx_net_info "0" $eth_and_ib "eth" "$file_0" # Data port in index 0
+	get_connectx_net_info "1" $eth_and_ib "eth" "$file_1" # Data port in index 1 (if exists)
 	get_connectx_net_info "0" false "oob"       # Out-Of-Band port in index 0
 fi
 truncate -s 3000 $EMU_PARAM_DIR/eth_hw_counters
+
+rm -f $EMU_PARAM_DIR/eth_bdfs.txt
+rm -f $EMU_PARAM_DIR/ib_bdfs.txt
 
 # We don't want to update the FRU data as often as the temp values
 # or the link status for 2 reasons:
