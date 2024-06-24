@@ -97,34 +97,48 @@ IPMB_HOST_FLAG=/run/emu_param/ipmb_host_driver_loaded
 # The IPMB_RETRY_FLAG is created if the host driver is needed to be reloaded.
 # This flag is cleared after reboot the DPU or successful retry.
 IPMB_RETRY_FLAG=/run/emu_param/ipmb_host_driver_retry
+# Define the retry interval increase every one minute
+RETRY_INTERVAL_INCREASE=1
 
 load_ipmb_host() {
-	# There is a corner case that the ipmb-host driver can be loaded by this
-	# script and BMC at the same time. The handshake could be interrupted
-	# and cause the driver panic.
-	# If IPMB_HOST_FLAG exists on the system, that means the ipmb-host driver
-	# is loaded by BMC and the BMC is ready to do the handshake with DPU, there
-	# is no need to load it again. The script should check this flag before
-	# loading the ipmb-host to avoid the ipmi-host is loading or loaded by the
-	# BMC.
-	if [ ! -f $IPMB_HOST_FLAG ]; then
-		# The script should create this flag to avoid the BMC try to load the
-		# driver when the script is loading it.
-		touch $IPMB_HOST_FLAG
-		modprobe ipmb_host slave_add=$IPMB_HOST_CLIENTADDR
-		echo ipmb-host $IPMB_HOST_ADD > $I2C_NEW_DEV
-		# The script should remove this flag to avoid the BMC can't reload the
-		# driver after BMC boot up.
-		rm $IPMB_HOST_FLAG
-	fi
+	# The script should create this flag to avoid the BMC try to load the
+	# driver when the script is loading it.
+	touch $IPMB_HOST_FLAG
+	modprobe ipmb_host slave_add=$IPMB_HOST_CLIENTADDR
+	echo ipmb-host $IPMB_HOST_ADD > $I2C_NEW_DEV
+	# The script should remove this flag to avoid the BMC can't reload the
+	# driver after BMC boot up.
+	rm $IPMB_HOST_FLAG
 }
 
 remove_ipmb_host() {
-	if [ ! -f $IPMB_HOST_FLAG ]; then
-		touch $IPMB_HOST_FLAG
-		echo $IPMB_HOST_ADD > $I2C_DEL_DEV
-		rmmod ipmb_host
-		rm $IPMB_HOST_FLAG
+	touch $IPMB_HOST_FLAG
+	echo $IPMB_HOST_ADD > $I2C_DEL_DEV
+	rmmod ipmb_host
+	rm $IPMB_HOST_FLAG
+}
+
+# Function to load IPMB host with retry mechanism
+load_ipmb_host_with_retry() {
+	# Load IPMB host
+	load_ipmb_host
+	# Check IPMI MC info and redirect output to /dev/null
+	ipmitool mc info > /dev/null 2>&1
+	# If ipmitool command fails
+	if [ $? -ne 0 ]; then
+		# If IPMB retry flag file exists, read and increment the retry count
+		if [ -f $IPMB_RETRY_FLAG ]; then
+			retries=$(cat $IPMB_RETRY_FLAG)
+			retries=$((retries + 1))
+		else
+		# If the file does not exist, start with the first retry
+			retries=1
+		fi
+        # Update the retry count in the file
+		echo $retries > $IPMB_RETRY_FLAG
+	else
+		# Remove IPMB retry flag file if ipmitool command succeeds
+		rm -f $IPMB_RETRY_FLAG
 	fi
 }
 
@@ -165,30 +179,33 @@ if [ "$i2cbus" != "NONE" ]; then
 			# Load the driver 2.5mn after boot to give the BMC time
 			# to get ready for IPMB transactions.
 			if [ "$curr_time" -ge 150 ]; then
-				load_ipmb_host
-				ipmitool mc info > /dev/null 2>&1
-				if [ ! $? -eq 0 ]; then
-					touch $IPMB_RETRY_FLAG
-				fi
+				load_ipmb_host_with_retry
 			fi
 		else
-			load_ipmb_host
-			ipmitool mc info > /dev/null 2>&1
-			if [ ! $? -eq 0 ]; then
-				touch $IPMB_RETRY_FLAG
-			fi
+			load_ipmb_host_with_retry
+		fi
+	fi
+	# If the IPMB Host is loaded by the BMC, check if the driver is loaded successfully.
+	if [ -f $IPMB_HOST_FLAG ]; then
+		ipmitool mc info > /dev/null 2>&1
+		if [ $? -eq 0 ]; then
+			rm -f $IPMB_RETRY_FLAG
 		fi
 	fi
 	# The i2c bus between BMC and DPU could be overused and susceptible to be busy.
-	# Retry every 6mn after boot if the driver fails to load.
 	if [ -f $IPMB_RETRY_FLAG ]; then
-		if [ $(( $t % 6 )) -eq 0 ] && [ "$curr_time" -ge 300 ]; then
+		# Read the retry count from the file
+		retries=$(cat $IPMB_RETRY_FLAG)
+		# Calculate the retry interval. Increase by RETRY_INTERVAL_INCREASE for each retry.
+		retry_interval=$(($RETRY_INTERVAL_INCREASE * retries))
+		# The max loop that this script can record from ipmb_update_timer is one hour
+		# This ensures that the retry_interval does not exceed the maximum allowed loop period, or it won't retry
+		if [ $retry_interval -gt $fru_timer ]; then
+			retry_interval=$fru_timer
+		fi
+		if [ $(( $t % retry_interval )) -eq 0 ] && [ "$curr_time" -ge 300 ]; then
 			remove_ipmb_host
-			load_ipmb_host
-			ipmitool mc info > /dev/null 2>&1
-			if [ $? -eq 0 ]; then
-				rm $IPMB_RETRY_FLAG
-			fi
+			load_ipmb_host_with_retry
 		fi
 	fi
 fi #support_ipmb
