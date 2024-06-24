@@ -5,9 +5,6 @@
 # journalctl -u set_emu_param
 
 EMU_PARAM_DIR=/run/emu_param
-#This flag will be created at the end of the first loop
-# When the service of set_emu_param is ended, it will be removed
-FIRST_LOOP_FLAG=$EMU_PARAM_DIR/start_set_emu_param
 
 if [ ! -d $EMU_PARAM_DIR ]; then
 	mkdir $EMU_PARAM_DIR
@@ -787,37 +784,26 @@ if [ "$t" = "$fru_timer" ]; then
 	fi
 fi
 
-# Do this only once after the service started
-if [ ! -f $FIRST_LOOP_FLAG ]; then
-	###################################
-	#        Get the product name     #
-	###################################
-	product_name=$(dmidecode -s system-product-name)
-	if [ -n "$product_name" ]; then
-		echo $product_name> $EMU_PARAM_DIR/product_name
-		truncate -s 64 $EMU_PARAM_DIR/product_name
-	fi
+# Check that dmidecode is working
+product_name=$(dmidecode -s system-product-name)
+###################################
+#        Get the product name     #
+###################################
+if [ ! -f $EMU_PARAM_DIR/product_name ] && [ -n "$product_name" ]; then
+	echo $product_name> $EMU_PARAM_DIR/product_name
+	truncate -s 64 $EMU_PARAM_DIR/product_name
+fi
 	
-	###################################
-	#        Get the dmidecode_info   #
-	###################################
-	# The dmidecode is use in the BMC to create system FRU
-	if [ -f "$EMU_PARAM_DIR/dmidecode_info" ]; then
-		rm $EMU_PARAM_DIR/dmidecode_info
-	fi
+###################################
+#        Get the dmidecode_info   #
+###################################
+if [ ! -f "$EMU_PARAM_DIR/dmidecode_info" ] && [ -n "$product_name" ]; then
 	declare -A fruConf
 	source /etc/ipmi/config_type.sh
-
 	for key in "${!fruConf[@]}"; do
 		output=$(dmidecode -s ${fruConf[$key]})
 		echo "$key : $output" >> $EMU_PARAM_DIR/dmidecode_info
 	done
 	
 	truncate -s 700 $EMU_PARAM_DIR/dmidecode_info
-fi
-
-# This file is a flag to tell that this the service is running fo the first time
-# When service stop, this file wil be deleted
-if [ ! -f $FIRST_LOOP_FLAG ]; then
-	touch $FIRST_LOOP_FLAG
 fi
