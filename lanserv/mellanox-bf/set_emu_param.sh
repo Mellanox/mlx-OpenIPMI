@@ -847,13 +847,15 @@ fi
 ###################################
 #        Get the dmidecode_info   #
 ###################################
-if [ ! -f "$EMU_PARAM_DIR/dmidecode_info" ] && [ -n "$product_name" ]; then
+#This is done every one minute due to error when instaling new bfb
+if  [ -n "$product_name" ]; then
+	rm $EMU_PARAM_DIR/dmidecode_info
 	declare -A fruConf
 	source /etc/ipmi/config_type.sh
 	for key in "${!fruConf[@]}"; do
 		output=$(dmidecode -s ${fruConf[$key]})
 		echo "$key : $output" >> $EMU_PARAM_DIR/dmidecode_info
 	done
-	
+
 	truncate -s 700 $EMU_PARAM_DIR/dmidecode_info
 fi
