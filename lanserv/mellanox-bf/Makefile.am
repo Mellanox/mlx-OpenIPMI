@@ -18,6 +18,7 @@ install-data-local:
 	$(INSTALL) -m 755 -d "$(DESTDIR)$(sysconfdir)/ipmi/"; \
 	$(INSTALL) -m 755 -d "$(DESTDIR)/lib/systemd/system/"; \
 	$(INSTALL) -m 755 $(srcdir)/set_emu_param.sh "$(DESTDIR)$(bindir)/"; \
+	$(INSTALL) -m 755 $(srcdir)/load_ipmb_host.sh "$(DESTDIR)$(bindir)/"; \
 	$(INSTALL) -m 755 $(srcdir)/poll_set_emu_param.sh "$(DESTDIR)$(bindir)/"; \
 	$(INSTALL) -m 755 $(srcdir)/mlx_ipmid_init.sh "$(DESTDIR)$(bindir)/"; \
 	$(INSTALL) -m 755 $(srcdir)/mlx_emu_init.sh "$(DESTDIR)$(bindir)/"; \
@@ -43,6 +44,7 @@ install-data-local:
 uninstall-local:
 	-rm -f "$(DESTDIR)/lib/systemd/system/set_emu_param.service"
 	-rm -f "$(DESTDIR)$(bindir)/set_emu_param.sh"
+	-rm -f "$(DESTDIR)$(bindir)/load_ipmb_host.sh"
 	-rm -f "$(DESTDIR)$(bindir)/poll_set_emu_param.sh"
 	-rm -f "$(DESTDIR)$(bindir)/mlx_ipmid_init.sh"
 	-rm -f "$(DESTDIR)$(bindir)/mlx_emu_init.sh"
