@@ -58,18 +58,10 @@ curr_time=$((( $fru_timer - $t) * $loop_period ))
 
 # By default, 0x30 is the BF slave address at which
 # the ipmb_dev_int device is registered.
-# By default, 0x11 is the BF slave address at which
-# the ipmb_host device is registered.
 # The i2c slave backends have their own address
 # space. So, add 0x1000 to the original address.
 # The following addresses are all in hex.
 IPMB_DEV_INT_ADD=0x1030
-IPMB_HOST_ADD=0x1011
-
-# By default, the ipmb_host driver communicates with
-# a client at address 0x10.
-# ipmb_host driver is not installed in all images
-IPMB_HOST_CLIENTADDR=0x10
 
 BF2_PLATFORM_ID=0x00000214
 
@@ -86,7 +78,7 @@ else
 fi
 
 I2C_NEW_DEV=/sys/bus/i2c/devices/i2c-$i2cbus/new_device
-I2C_DEL_DEV=/sys/bus/i2c/devices/i2c-$i2cbus/delete_device
+
 # The IPMB_HOST_FLAG is created if the ipmb-host driver is loaded by the BMC
 # using ipmi oem command: ipmitool -I ipmb raw 0x2e 0x2 0x47 0x16 0x0
 # This flag is cleared after reboot the DPU.
@@ -97,28 +89,8 @@ IPMB_RETRY_FLAG=/run/emu_param/ipmb_host_driver_retry
 # Define the retry interval increase every one minute
 RETRY_INTERVAL_INCREASE=1
 
-load_ipmb_host() {
-	# The script should create this flag to avoid the BMC try to load the
-	# driver when the script is loading it.
-	touch $IPMB_HOST_FLAG
-	modprobe ipmb_host slave_add=$IPMB_HOST_CLIENTADDR
-	echo ipmb-host $IPMB_HOST_ADD > $I2C_NEW_DEV
-	# The script should remove this flag to avoid the BMC can't reload the
-	# driver after BMC boot up.
-	rm $IPMB_HOST_FLAG
-}
 
-remove_ipmb_host() {
-	touch $IPMB_HOST_FLAG
-	echo $IPMB_HOST_ADD > $I2C_DEL_DEV
-	rmmod ipmb_host
-	rm $IPMB_HOST_FLAG
-}
-
-# Function to load IPMB host with retry mechanism
-load_ipmb_host_with_retry() {
-	# Load IPMB host
-	load_ipmb_host
+check_ipmb_connection() {
 	# Check IPMI MC info and redirect output to /dev/null
 	ipmitool mc info > /dev/null 2>&1
 	# If ipmitool command fails
@@ -133,10 +105,16 @@ load_ipmb_host_with_retry() {
 		fi
         # Update the retry count in the file
 		echo $retries > $IPMB_RETRY_FLAG
+		remove_ipmb_host
 	else
 		# Remove IPMB retry flag file if ipmitool command succeeds
 		rm -f $IPMB_RETRY_FLAG
 	fi
+}
+
+# Function to load IPMB host with retry mechanism
+load_ipmb_host_with_retry() {
+	/usr/bin/load_ipmb_host.sh "$i2cbus" &
 }
 
 if [ "$i2cbus" != "NONE" ]; then
@@ -154,25 +132,28 @@ if [ "$i2cbus" != "NONE" ]; then
 	if [ ! "$(lsmod | grep ipmi_devintf)" ]; then
 		modprobe ipmi_devintf
 	fi
-	
+
 	# load the ipmb_host driver, if installed in BF
 	is_ipmb_host_driver=false
-	
-    if find /lib/modules/ /usr/lib/modules/ \( -name "ipmb_host.ko" -o -name "ipmb-host.ko" \) -print -quit | grep -q .; then
+
+	if find /lib/modules/ /usr/lib/modules/ \( -name "ipmb_host.ko" -o -name "ipmb-host.ko" \) -print -quit | grep -q .; then
 		is_ipmb_host_driver=true
-    fi
-	# The BMC is slower than DPU to be ready on BF2 and BF1.
-	# The BMC is faster than DPU to be ready on BF3.
-	# Currently we want to keep the delay for BF2 and BF1.
-	# As the bf_family name of Roy and Roy-B are the same for BF2 and BF3,
-	# We need to check it is Roy or Roy-B according to the platform ID.
-	# The bf_version is used to distinguish the "Roy" and "Roy-B".
-	# Roy-B doesn't need the delay of loading the driver.
-    if [ ! "$(lsmod | grep ipmb_host)" ] && $is_ipmb_host_driver; then
+	fi
+
+	# Load the IPMB Host driver during the initial boot of the BlueField device
+	# During the initial boot, if the ipmb_host driver is not loaded, we won't have the retry flag and host flag
+	if [ ! "$(lsmod | grep ipmb_host)" ] && [ ! -f $IPMB_RETRY_FLAG ] && $is_ipmb_host_driver && [ ! -f $IPMB_HOST_FLAG ]; then
+		# The BMC is slower than DPU to be ready on BF2 and BF1.
+		# The BMC is faster than DPU to be ready on BF3.
+		# Currently we want to keep the delay for BF2 and BF1.
+		# As the bf_family name of Roy and Roy-B are the same for BF2 and BF3,
+		# We need to check it is Roy or Roy-B according to the platform ID.
+		# The bf_version is used to distinguish the "Roy" and "Roy-B".
+		# Roy-B doesn't need the delay of loading the driver.
 		if [ "$bffamily" = "BlueSphere" ] || [ "$bffamily" = "PRIS" ] ||
-		   [ "$bffamily" = "Camelantis" ] || [ "$bffamily" = "Aztlan" ] ||
-		   [ "$bffamily" = "Dell-Camelantis" ] || [ "$bffamily" = "El-Dorado" ] ||
-		   ([ "$bffamily" = "Roy" ] && [ "$bf_version" = $BF2_PLATFORM_ID ]); then
+			[ "$bffamily" = "Camelantis" ] || [ "$bffamily" = "Aztlan" ] ||
+			[ "$bffamily" = "Dell-Camelantis" ] || [ "$bffamily" = "El-Dorado" ] ||
+			([ "$bffamily" = "Roy" ] && [ "$bf_version" = $BF2_PLATFORM_ID ]); then
 			# Load the driver 2.5mn after boot to give the BMC time
 			# to get ready for IPMB transactions.
 			if [ "$curr_time" -ge 150 ]; then
@@ -182,27 +163,29 @@ if [ "$i2cbus" != "NONE" ]; then
 			load_ipmb_host_with_retry
 		fi
 	fi
-	# If the IPMB Host is loaded by the BMC, check if the driver is loaded successfully.
-	if [ -f $IPMB_HOST_FLAG ]; then
-		ipmitool mc info > /dev/null 2>&1
-		if [ $? -eq 0 ]; then
-			rm -f $IPMB_RETRY_FLAG
-		fi
+
+	# Check the status of the IPMB Host driver if it is loaded from BMC
+	if $is_ipmb_host_driver && [ -f $IPMB_HOST_FLAG ]; then
+		check_ipmb_connection
+		# Finished to check the connection, remove the flag to allow both BMC and ARM can load it again.
+		rm -f $IPMB_HOST_FLAG
 	fi
+
 	# The i2c bus between BMC and DPU could be overused and susceptible to be busy.
 	if [ -f $IPMB_RETRY_FLAG ]; then
-		# Read the retry count from the file
-		retries=$(cat $IPMB_RETRY_FLAG)
-		# Calculate the retry interval. Increase by RETRY_INTERVAL_INCREASE for each retry.
-		retry_interval=$(($RETRY_INTERVAL_INCREASE * retries))
-		# The max loop that this script can record from ipmb_update_timer is one hour
-		# This ensures that the retry_interval does not exceed the maximum allowed loop period, or it won't retry
-		if [ $retry_interval -gt $fru_timer ]; then
-			retry_interval=$fru_timer
-		fi
-		if [ $(( $t % retry_interval )) -eq 0 ] && [ "$curr_time" -ge 300 ]; then
-			remove_ipmb_host
-			load_ipmb_host_with_retry
+		if [ "$curr_time" -ge 300 ]; then
+			# Read the retry count from the file
+			retries=$(cat $IPMB_RETRY_FLAG)
+			# Calculate the retry interval. Increase by RETRY_INTERVAL_INCREASE for each retry.
+			retry_interval=$(($RETRY_INTERVAL_INCREASE * retries))
+			# The max loop that this script can record from ipmb_update_timer is one hour
+			# This ensures that the retry_interval does not exceed the maximum allowed loop period, or it won't retry
+			if [ $retry_interval -gt $fru_timer ]; then
+				retry_interval=$fru_timer
+			fi
+			if [ $(( $t % retry_interval )) -eq 0 ]; then
+				load_ipmb_host_with_retry
+			fi
 		fi
 	fi
 fi #support_ipmb
