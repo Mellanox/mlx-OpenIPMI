@@ -431,7 +431,7 @@ get_connectx_net_info() {
 	if [ $? -eq 0 ]; then
 
 		# Check IPv4 connection type
-		file=$(nmcli -g ipv4.method con show $connection_name)
+		file=$(nmcli -g ipv4.method con show "$connection_name")
 
 		if [ "$file" = "auto" ]; then
 			echo "IPv4 Address Origin: DHCP" >> $EMU_PARAM_DIR/$file_name$1
@@ -449,7 +449,7 @@ get_connectx_net_info() {
 	if [ $? -eq 0 ]; then
 
 		# Check IPv6 connection type
-		file=$(nmcli -g ipv6.method con show $connection_name)
+		file=$(nmcli -g ipv6.method con show "$connection_name")
 
 		if [ "$file" = "auto" ]; then
 			echo "IPv6 Address Origin: DHCP" >> $EMU_PARAM_DIR/$file_name$1
