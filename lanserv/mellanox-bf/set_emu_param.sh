@@ -70,8 +70,7 @@ if [ "$bffamily" = "Bluewhale" ]; then
 elif [ "$bffamily" = "BlueSphere" ] || [ "$bffamily" = "PRIS" ] ||
      [ "$bffamily" = "Camelantis" ] || [ "$bffamily" = "Aztlan" ] ||
      [ "$bffamily" = "Dell-Camelantis" ] || [ "$bffamily" = "Roy" ] ||
-     [ "$bffamily" = "El-Dorado" ] || [ "$bffamily" = "Moonraker" ] ||
-     [ "$bffamily" = "Goldeneye" ]; then
+     [ "$bffamily" = "Moonraker" ] || [ "$bffamily" = "Goldeneye" ]; then
 	i2cbus=1
 else
 	i2cbus=$support_ipmb
@@ -152,7 +151,7 @@ if [ "$i2cbus" != "NONE" ]; then
 		# Roy-B doesn't need the delay of loading the driver.
 		if [ "$bffamily" = "BlueSphere" ] || [ "$bffamily" = "PRIS" ] ||
 			[ "$bffamily" = "Camelantis" ] || [ "$bffamily" = "Aztlan" ] ||
-			[ "$bffamily" = "Dell-Camelantis" ] || [ "$bffamily" = "El-Dorado" ] ||
+			[ "$bffamily" = "Dell-Camelantis" ] ||
 			([ "$bffamily" = "Roy" ] && [ "$bf_version" = $BF2_PLATFORM_ID ]); then
 			# Load the driver 2.5mn after boot to give the BMC time
 			# to get ready for IPMB transactions.
