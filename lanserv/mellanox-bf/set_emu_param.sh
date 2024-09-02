@@ -88,32 +88,9 @@ IPMB_RETRY_FLAG=/run/emu_param/ipmb_host_driver_retry
 # Define the retry interval increase every one minute
 RETRY_INTERVAL_INCREASE=1
 
-
-check_ipmb_connection() {
-	# Check IPMI MC info and redirect output to /dev/null
-	ipmitool mc info > /dev/null 2>&1
-	# If ipmitool command fails
-	if [ $? -ne 0 ]; then
-		# If IPMB retry flag file exists, read and increment the retry count
-		if [ -f $IPMB_RETRY_FLAG ]; then
-			retries=$(cat $IPMB_RETRY_FLAG)
-			retries=$((retries + 1))
-		else
-		# If the file does not exist, start with the first retry
-			retries=1
-		fi
-        # Update the retry count in the file
-		echo $retries > $IPMB_RETRY_FLAG
-		remove_ipmb_host
-	else
-		# Remove IPMB retry flag file if ipmitool command succeeds
-		rm -f $IPMB_RETRY_FLAG
-	fi
-}
-
 # Function to load IPMB host with retry mechanism
 load_ipmb_host_with_retry() {
-	/usr/bin/load_ipmb_host.sh "$i2cbus" &
+	/usr/bin/load_ipmb_host.sh "$i2cbus" "load" &
 }
 
 if [ "$i2cbus" != "NONE" ]; then
@@ -163,11 +140,12 @@ if [ "$i2cbus" != "NONE" ]; then
 		fi
 	fi
 
-	# Check the status of the IPMB Host driver if it is loaded from BMC
 	if $is_ipmb_host_driver && [ -f $IPMB_HOST_FLAG ]; then
-		check_ipmb_connection
-		# Finished to check the connection, remove the flag to allow both BMC and ARM can load it again.
-		rm -f $IPMB_HOST_FLAG
+		if [ "$curr_time" -ge 300 ]; then
+			# Remove the flag if the driver is loaded by the BMC to allow the retry mechanism on script
+			/usr/bin/load_ipmb_host.sh "$i2cbus" "remove" &
+			echo 1 > $IPMB_RETRY_FLAG
+		fi
 	fi
 
 	# The i2c bus between BMC and DPU could be overused and susceptible to be busy.

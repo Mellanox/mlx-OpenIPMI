@@ -2,11 +2,13 @@
 
 # Check if the i2cbus parameter is provided
 if [ -z "$1" ]; then
-  echo "Usage: $0 <i2cbus>"
+  echo "Usage: $0 <i2cbus> <action>"
+  echo "Actions: load, remove"
   exit 1
 fi
 
 i2cbus=$1
+action=$2
 
 # By default, 0x11 is the BF slave address at which
 # the ipmb_host device is registered.
@@ -63,14 +65,21 @@ check_ipmb_connection() {
 	fi
 }
 
-# Function to load IPMB host with retry mechanism
-if [ ! -f $IPMB_HOST_FLAG ]; then
-	touch $IPMB_HOST_FLAG
-	# Avoid the driver is loaded at same time by BMC and script
-	sleep 10
-	load_ipmb_host
-	check_ipmb_connection
-	# Avoid the driver is loaded at same time by BMC and script
-	sleep 10
-	rm -f $IPMB_HOST_FLAG
+if [ "$action" == "load" ]; then
+	# Function to load IPMB host with retry mechanism
+	if [ ! -f $IPMB_HOST_FLAG ]; then
+		touch $IPMB_HOST_FLAG
+		# Avoid the driver is loaded at same time by BMC and script
+		sleep 15
+		load_ipmb_host
+		check_ipmb_connection
+		# Avoid the driver is loaded at same time by BMC and script
+		sleep 15
+		rm -f $IPMB_HOST_FLAG
+	fi
+elif [ "$action" == "remove" ]; then
+	if [ -f $IPMB_HOST_FLAG ]; then
+		sleep 10
+		rm -f $IPMB_HOST_FLAG
+	fi
 fi
