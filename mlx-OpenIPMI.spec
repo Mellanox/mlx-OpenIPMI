@@ -93,7 +93,6 @@ rm -f %{buildroot}/usr/lib64/OpenIPMI/*.la %{buildroot}/usr/lib64/OpenIPMI/*.a
 /usr/share/man/man8/ipmilan.8.gz
 %{_bindir}/ipmi*
 %{_bindir}/set_emu_param.sh
-%{_bindir}/load_ipmb_host.sh
 %{_bindir}/poll_set_emu_param.sh
 %{_bindir}/mlx_ipmid_init.sh
 %{_bindir}/mlx_emu_init.sh
