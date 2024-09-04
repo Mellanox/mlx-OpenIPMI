@@ -70,6 +70,11 @@ sensor_add 0x30 0 8 0x1b 0x6f	\
 	poll 5000		\
 	file "/run/emu_param/p1_link"
 
+# Add the DDR temperature sensor
+sensor_add 0x30 0 9 0x01 0x01	\
+	poll 5000		\
+	file "/run/emu_param/ddr_temp"
+
 ########## FRUs ##########
 
 # mc_add_fru_data mc-addr DeviceID FRUSize (data byte1 ... byteN |

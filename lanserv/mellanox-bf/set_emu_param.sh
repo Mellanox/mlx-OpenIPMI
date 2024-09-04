@@ -622,6 +622,38 @@ else
 
 fi
 
+####################################
+#     Get the DDR temperature      #
+####################################
+
+# Initialize temp to an empty string
+temp=""
+
+# Iterate through all the LNXTHERM:XX/description files to find which sensor corresponds with ddr_temp
+for file in /sys/bus/acpi/devices/LNXTHERM:*/description; do
+    # Check if the file contains the exactly string "ddr_temp"
+    if grep -qx "ddr_temp" "$file"; then
+        found_ddr_temp=true
+        
+        # Extract the hexadecimal code from the file path
+        hex_code=$(echo "$file" | sed -n 's/.*LNXTHERM:\([0-9A-Fa-f]*\).*/\1/p')
+        
+        # Convert the hexadecimal code to decimal and add 1 to get the sensor number
+        dec_code=$((0x$hex_code + 1))
+        
+        # Extract the sensor value
+        temp=$(sensors -j acpitz-acpi-0 | jq -r ".\"acpitz-acpi-0\".temp$dec_code.temp${dec_code}_input")
+        
+        break
+    fi
+done
+
+# Check if temp is valid and write to file, else call remove_sensor
+if [[ -n "$temp" && "$temp" != "null" ]]; then
+    echo "$temp" > "$EMU_PARAM_DIR/ddr_temp"
+else
+    remove_sensor "ddr_temp"
+fi
 
 ###################################
 #          Get FW info            #
