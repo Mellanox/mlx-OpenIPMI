@@ -76,18 +76,26 @@ IPMB_HOST_CLIENTADDR=0x10
 BF2_PLATFORM_ID=0x00000214
 
 if [ "$bffamily" = "Bluewhale" ]; then
-	i2cbus=2
+	i2cbus_master=2
+	i2cbus_slave=2
 elif [ "$bffamily" = "BlueSphere" ] || [ "$bffamily" = "PRIS" ] ||
      [ "$bffamily" = "Camelantis" ] || [ "$bffamily" = "Aztlan" ] ||
-     [ "$bffamily" = "Dell-Camelantis" ] || [ "$bffamily" = "Roy" ] ||
+     [ "$bffamily" = "Dell-Camelantis" ] || [ "$bffamily" = "Roy" ]; then
+	i2cbus_master=1
+	i2cbus_slave=1
+elif
      [ "$bffamily" = "Moonraker" ] || [ "$bffamily" = "Goldeneye" ]; then
-	i2cbus=1
+	i2cbus_master=1
+	i2cbus_slave=5
 else
-	i2cbus=$support_ipmb
+	i2cbus_master=$support_ipmb
+	i2cbus_slave=$support_ipmb
 fi
 
-I2C_NEW_DEV=/sys/bus/i2c/devices/i2c-$i2cbus/new_device
-I2C_DEL_DEV=/sys/bus/i2c/devices/i2c-$i2cbus/delete_device
+I2C_NEW_DEV_MASTER=/sys/bus/i2c/devices/i2c-$i2cbus_master/new_device
+I2C_DEL_DEV_MASTER=/sys/bus/i2c/devices/i2c-$i2cbus_master/delete_device
+I2C_NEW_DEV_SLAVE=/sys/bus/i2c/devices/i2c-$i2cbus_slave/new_device
+
 # The IPMB_RETRY_FLAG is created if the host driver is needed to be reloaded.
 # This flag is cleared after reboot the DPU or successful retry.
 IPMB_RETRY_FLAG=/run/emu_param/ipmb_host_driver_retry
@@ -96,11 +104,11 @@ RETRY_INTERVAL_INCREASE=1
 
 load_ipmb_host() {
 	modprobe ipmb_host slave_add=$IPMB_HOST_CLIENTADDR
-	echo ipmb-host $IPMB_HOST_ADD > $I2C_NEW_DEV
+	echo ipmb-host $IPMB_HOST_ADD > $I2C_NEW_DEV_MASTER
 }
 
 remove_ipmb_host() {
-	echo $IPMB_HOST_ADD > $I2C_DEL_DEV
+	echo $IPMB_HOST_ADD > $I2C_DEL_DEV_MASTER
 	rmmod ipmb_host
 }
 
@@ -132,14 +140,14 @@ load_ipmb_host_with_retry() {
 	check_ipmb_connection
 }
 
-if [ "$i2cbus" != "NONE" ]; then
+if [ "$i2cbus_slave" != "NONE" ]; then
 	# Instantiate the ipmb-dev device
-	if [ ! -c "/dev/ipmb-$i2cbus" ]; then
-		echo ipmb-dev $IPMB_DEV_INT_ADD > $I2C_NEW_DEV
+	if [ ! -c "/dev/ipmb-$i2cbus_slave" ]; then
+		echo ipmb-dev $IPMB_DEV_INT_ADD > $I2C_NEW_DEV_SLAVE
 	fi
 
-	if ! grep -q "ipmb-$i2cbus" /etc/ipmi/mlx-bf.lan.conf; then
-		echo "  ipmb 2 ipmb_dev_int /dev/ipmb-$i2cbus" >> /etc/ipmi/mlx-bf.lan.conf
+	if ! grep -q "ipmb-$i2cbus_slave" /etc/ipmi/mlx-bf.lan.conf; then
+		echo "  ipmb 2 ipmb_dev_int /dev/ipmb-$i2cbus_slave" >> /etc/ipmi/mlx-bf.lan.conf
 	fi
 	if [ ! "$(lsmod | grep ipmi_msghandler)" ]; then
 		modprobe ipmi_msghandler
