@@ -95,6 +95,8 @@ fi
 I2C_NEW_DEV_MASTER=/sys/bus/i2c/devices/i2c-$i2cbus_master/new_device
 I2C_DEL_DEV_MASTER=/sys/bus/i2c/devices/i2c-$i2cbus_master/delete_device
 I2C_NEW_DEV_SLAVE=/sys/bus/i2c/devices/i2c-$i2cbus_slave/new_device
+# After IPMB host detect the BMC, it will create BMC device created under sysfs i2c bus.
+SYS_BUS_BMC_DEVICES="/sys/bus/i2c/devices/*/bmc"
 
 # The IPMB_RETRY_FLAG is created if the host driver is needed to be reloaded.
 # This flag is cleared after reboot the DPU or successful retry.
@@ -113,24 +115,20 @@ remove_ipmb_host() {
 }
 
 check_ipmb_connection() {
-	# Check IPMI MC info and redirect output to /dev/null
-	ipmitool mc info > /dev/null 2>&1
-	# If ipmitool command fails
-	if [ $? -ne 0 ]; then
+	# Check the IPMB host driver is successful to connect to the BMC
+	if ls $SYS_BUS_BMC_DEVICES 1> /dev/null 2>&1; then
+		rm -f $IPMB_RETRY_FLAG
+	else
 		# If IPMB retry flag file exists, read and increment the retry count
 		if [ -f $IPMB_RETRY_FLAG ]; then
 			retries=$(cat $IPMB_RETRY_FLAG)
 			retries=$((retries + 1))
 		else
-		# If the file does not exist, start with the first retry
 			retries=1
 		fi
-        # Update the retry count in the file
+		# Update the retry count in the file
 		echo $retries > $IPMB_RETRY_FLAG
 		remove_ipmb_host
-	else
-		# Remove IPMB retry flag file if ipmitool command succeeds
-		rm -f $IPMB_RETRY_FLAG
 	fi
 }
 
