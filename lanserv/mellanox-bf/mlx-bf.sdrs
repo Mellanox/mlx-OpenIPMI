@@ -560,32 +560,32 @@ sdr type 1
 	init_scanning		true
 	init_events		true
 	init_thresholds		true
-	init_hysteresis		true
+	init_hysteresis		false
 	init_sensor_type	true
 	default_event_gen_on	true
 	default_sensor_scan_on	true
 	sensor_auto_rearm	true
 	sensor_event_msg_ctrl	per_state
 	sensor_threshold_access	settable
-	return_lnc		true
-	return_lc		true
+	return_lnc		false
+	return_lc		false
 	return_unc		true
 	return_uc		true
-	deassert_lncgl		true
+	deassert_lncgl		false
 	deassert_uncgh		true
-	deassert_lcgl		true
+	deassert_lcgl		false
 	deassert_ucgh		true
-	assert_lncgl		true
+	assert_lncgl		false
 	assert_uncgh		true
-	assert_lcgl		true
+	assert_lcgl		false
 	assert_ucgh		true
-	lnc_thrsh_settable	true
+	lnc_thrsh_settable	false
 	unc_thrsh_settable	true
-	lc_thrsh_settable	true
+	lc_thrsh_settable	false
 	uc_thrsh_settable	true
-	lnc_thrsh_readable	true
+	lnc_thrsh_readable	false
 	unc_thrsh_readable	true
-	lc_thrsh_readable	true
+	lc_thrsh_readable	false
 	uc_thrsh_readable	true
 	analog_data_format	unsigned
 	rate_unit		none
@@ -594,8 +594,8 @@ sdr type 1
 	base_unit		degrees_C
 	modifier_unit_code	unspecified
 	linearization		linear
-	nominal_specified	true
-	nominal_reading		80
+	nominal_specified	false
+	nominal_reading		0
 	m			1
 	tolerance		0
 	b			0
@@ -607,7 +607,7 @@ sdr type 1
 	sensor_maximum		255
 	sensor_minimum		0
 	lc_fthresh		0
-	lnc_fthresh		5
+	lnc_fthresh		0
 	unc_fthresh		95
 	uc_fthresh		105
 	positive_hysteresis	0
