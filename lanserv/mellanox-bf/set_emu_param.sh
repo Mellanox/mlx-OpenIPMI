@@ -101,8 +101,6 @@ SYS_BUS_BMC_DEVICES="/sys/bus/i2c/devices/*/bmc"
 # The IPMB_RETRY_FLAG is created if the host driver is needed to be reloaded.
 # This flag is cleared after reboot the DPU or successful retry.
 IPMB_RETRY_FLAG=/run/emu_param/ipmb_host_driver_retry
-# Define the retry interval increase every one minute
-RETRY_INTERVAL_INCREASE=1
 
 load_ipmb_host() {
 	modprobe ipmb_host slave_add=$IPMB_HOST_CLIENTADDR
@@ -162,24 +160,10 @@ if [ "$i2cbus_slave" != "NONE" ]; then
 	fi
 	# The i2c bus between BMC and DPU could be overused and susceptible to be busy.
 	if [ -f $IPMB_RETRY_FLAG ]; then
-		if [ "$curr_time" -ge 240 ]; then
-			# Read the retry count from the file
-			retries=$(cat $IPMB_RETRY_FLAG)
-			# Calculate the retry interval. Increase by RETRY_INTERVAL_INCREASE for each retry.
-			retry_interval=$(($RETRY_INTERVAL_INCREASE * retries))
-			# The max loop that this script can record from ipmb_update_timer is one hour
-			# This ensures that the retry_interval does not exceed the maximum allowed loop period, or it won't retry
-			if [ $retry_interval -gt $fru_timer ]; then
-				retry_interval=$fru_timer
-			fi
-			if [ $(( $t % retry_interval )) -eq 0 ]; then
-				load_ipmb_host_with_retry
-			fi
-		fi
-	fi
+		load_ipmb_host_with_retry
 	# Load the IPMB Host driver during the initial boot of the BlueField device
 	# During the initial boot, if the ipmb_host driver is not loaded, we won't have the retry flag and host flag
-	if [ ! "$(lsmod | grep ipmb_host)" ] && [ ! -f $IPMB_RETRY_FLAG ] && $is_ipmb_host_driver; then
+	elif [ ! "$(lsmod | grep ipmb_host)" ] && $is_ipmb_host_driver; then
 		# The BMC is slower than DPU to be ready on BF2 and BF1.
 		# The BMC is faster than DPU to be ready on BF3.
 		# Currently we want to keep the delay for BF2 and BF1.
