@@ -615,6 +615,52 @@ sdr type 1
 	id_string		"ddr_temp"
 endsdr
 
+sdr type 1
+	sensor_owner_id         0x30
+	sensor_owner_lun        0
+	sensor_number           12
+	channel_number          0
+	entity_id               system_board
+	entity_instance         2
+	init_scanning           true
+	init_events             true
+	init_thresholds         true
+	init_hysteresis         false
+	init_sensor_type        true
+	default_event_gen_on    true
+	default_sensor_scan_on  true
+	sensor_auto_rearm       true
+	sensor_hysteresis       no
+	sensor_threshold_access settable
+	sensor_event_msg_ctrl   per_state
+	sensor_type             Voltage
+	event_reading_type_code 1
+	return_lc               true
+	assert_lcgl             true
+	deassert_lcgl           true
+	lc_thrsh_settable       true
+	lc_thrsh_readable       true
+	analog_data_format      unsigned
+	rate_unit               none
+	modifier_unit           none
+	percentage              false
+	base_unit               Volts
+	modifier_unit_code      unspecified
+	linearization           linear
+	m                       1
+	tolerance               0
+	b                       0
+	accuracy                1
+	accuracy_exp            0
+	sensor_direction        output
+	r_exp                   -1
+	b_exp                   0
+	sensor_maximum          255
+	sensor_minimum          0
+	lc_fthresh              23
+	id_string               "rtc_voltage"
+endsdr
+
 # Timer for next FRU update
 sdr type 0x11
 	device_access_address	0x30
