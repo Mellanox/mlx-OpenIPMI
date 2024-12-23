@@ -713,6 +713,72 @@ else
 fi
 
 ###################################
+#     load mlxbf-ptm module      #
+###################################
+#Check for Linux Lockdown
+#If the system is in Linux lockdown, the file
+#"/sys/kernel/security/lockdown" will contain either:
+#"none integrity [confidentiality]"
+#"none [integrity] confidentiality" 
+
+LOCKDOWN_STATUS_PATH="/sys/kernel/security/lockdown"
+LOCKDOWN_STATUS="unlock"
+if [ -f "$LOCKDOWN_STATUS_PATH" ]; then
+    lockdown_status_string=$(cat "$LOCKDOWN_STATUS_PATH")
+    if [[ "$lockdown_status_string" == *"[integrity]"* || "$lockdown_status_string" == *"[confidentiality]"* ]]; then
+        echo "Error: Linux lockdown: system can't load mlxbf_ptm module; soc_power and power_envelope sensors unavailable."
+        LOCKDOWN_STATUS="lockdown"
+    fi
+fi
+# Check if mlxbf_ptm module is loaded
+if ! lsmod | grep -q mlxbf_ptm && [ "$LOCKDOWN_STATUS" = "unlock" ]; then
+    echo "mlxbf_ptm module not loaded, loading now."
+    modprobe mlxbf_ptm
+fi
+
+###################################
+#       Get SOC power info        #
+###################################
+SOC_POWER_PATH="/sys/kernel/debug/mlxbf-ptm/monitors/status/total_power"
+if [ ! -f "$SOC_POWER_PATH" ]; then
+    echo "Error: soc_power file not found try to load the driver with: modprobe mlxbf-ptm"
+    remove_sensor "soc_power"
+else
+    soc_power=$(cat "$SOC_POWER_PATH")
+    #check of soc_power is decimal number.
+    if ! [[ "$soc_power" =~ ^([0-9]+(\.[0-9]+)?|0)$ ]]; then
+        echo "Error: soc_power is not a valid number"
+        remove_sensor "soc_power"
+    else
+        # Remove all the number after the decimal point – it can cause issues in the ipmb
+        soc_power=$((${soc_power%.*}))
+        # echo the soc_power value in to /run/emu_param/soc_power
+        echo "$soc_power" > "${EMU_PARAM_DIR}/soc_power"
+    fi
+fi
+
+###################################
+#     Get power envelope info     #
+###################################
+POWER_ENVELOPE_PATH="/sys/kernel/debug/mlxbf-ptm/monitors/status/power_envelope"
+if [ ! -f "$POWER_ENVELOPE_PATH" ]; then
+    echo "Error: power_envelope file not found"
+    remove_sensor "power_envelope"
+else
+    power_envelope=$(cat "$POWER_ENVELOPE_PATH")
+    #check of power_envelope is decimal number.
+    if ! [[ "$power_envelope" =~ ^-?[0-9]+(\.[0-9]+)?$ ]]; then	
+        echo "Error: power_envelope is not a valid number"
+        remove_sensor "power_envelope"
+    else
+        # Remove all the number after the decimal point – it can cause issues in the ipmb
+        power_envelope=$((${power_envelope%.*}))
+        # echo the power_envelope value in to /run/emu_param/power_envelope
+        echo "$power_envelope" > "${EMU_PARAM_DIR}/power_envelope"
+    fi
+fi
+
+###################################
 #          Get FW info            #
 ###################################
 #
