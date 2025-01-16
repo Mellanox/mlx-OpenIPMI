@@ -665,34 +665,52 @@ fi
 #    Get the RTC Battry Voltage    #
 ####################################
 
-# Read discrete RTC low battery voltage value.
-# A value of 0x0 means RTC battery voltage is good.
-# A value of 0x80 means RTC battery voltage is low.
-temp=$(cat /sys/devices/platform/MLNXBF04:00/rtc_battery)
-
-# Currently, there is no Redfish schema which supports discrete sensors.
-# Hence, we map the values to the corresponding voltages which they represent.
-# We need the sensor resolution in volts to be 0.1V, because the thresholds
-# can have non-integer values in that resolution.
-# Since the SDR sensor configuration is based on raw integer values, we set
-# the input to be 10 times the real value in volts we want displayed.
-# A good voltage is considered to be ~3 volts.
-# So, 0x0 will be mapped to 30 (10 times 3).
-# A low voltage is considered to ve ~2 volts.
-# So, 0x80 will be mapped to 20 (10 times 2).
-
-case "$temp" in
-    0x0)
-        echo "30" > "$EMU_PARAM_DIR/rtc_voltage"
-        ;;
-    0x80)
-        echo "20" > "$EMU_PARAM_DIR/rtc_voltage"
-        ;;
-    *)
-        echo "RTC battery low voltage returned error code $temp"
-        remove_sensor "rtc_voltage"
-        ;;
-esac
+# RTC battery driver implementation changes across different distributions.
+# It may be integrated into the kernel or exist as an out-of-tree kernel module.
+# For this reason, the path to the RTC battery sensor data file may vary.
+# First, we check if the in-tree path exists:
+RTC_VOLTAGE_PATH="/sys/devices/platform/MLNXBF04:00/rtc_battery"
+if [ ! -e "${RTC_VOLTAGE_PATH}" ]; then
+    # If the in-tree path does not exist, we check the out-of-tree path:
+    RTC_VOLTAGE_PATH="/sys/devices/platform/MLNXBF04:00/driver/rtc_battery"
+	if [ ! -e "${RTC_VOLTAGE_PATH}" ]; then
+	    echo "Error: RTC battery driver was not loaded."
+	fi
+fi
+# Read discrete RTC low battery voltage value from driver path.
+if temp=$(cat "$RTC_VOLTAGE_PATH" 2>/dev/null); then
+    # Currently, there is no Redfish schema which supports discrete sensors.
+    # Hence, we map the values to the corresponding voltages which they represent.
+    # We need the sensor resolution in volts to be 0.1V, because the thresholds
+    # can have non-integer values in that resolution.
+    # Since the SDR sensor configuration is based on raw integer values, we set
+    # the input to be 10 times the real value in volts we want displayed.
+    case "$temp" in
+        0x0)
+            # A value of 0x0 means RTC battery voltage has an acceptable value
+            # of about 3 Volts. We set the sensor value to 30 (10 times 3).
+            echo "30" > "$EMU_PARAM_DIR/rtc_voltage"
+            ;;
+        0x80)
+            # A value of 0x80 means RTC battery voltage is low at about 2 Volts.
+            # We set the sensor value to 20 (10 times 2).
+            echo "20" > "$EMU_PARAM_DIR/rtc_voltage"
+            ;;
+        *)
+            # If the value is not 0x0 or 0x80, it is considered an error code.
+            # We print it and remove the sensor file so it appears as if there
+            # is no sensor reading.
+            echo "RTC battery low voltage returned error code $temp"
+            remove_sensor "rtc_voltage"
+            ;;
+    esac
+else
+    # Unable to read RTC battery low voltage. It is possible this is because
+    # the RTC battery driver was not loaded, so the sensor file cannot be found.
+    # Print an error and remove the sensor file so no reading is available.
+    echo "Error reading RTC battery low voltage."
+    remove_sensor "rtc_voltage"
+fi
 
 ###################################
 #          Get FW info            #
