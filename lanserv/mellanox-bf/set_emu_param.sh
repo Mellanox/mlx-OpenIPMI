@@ -1011,5 +1011,5 @@ if  [ -n "$product_name" ]; then
 		echo "$key : $output" >> $EMU_PARAM_DIR/dmidecode_info
 	done
 
-	truncate -s 700 $EMU_PARAM_DIR/dmidecode_info
+	truncate -s 1310 $EMU_PARAM_DIR/dmidecode_info
 fi
