@@ -136,5 +136,5 @@ mc_add_fru_data 0x30 16 3000 file 0 "/run/emu_param/eth_hw_counters"
 mc_add_fru_data 0x30 17 3200 file 0 "/run/emu_param/oob0"
 mc_add_fru_data 0x30 18 1280 file 0 "/run/emu_param/bf_fru"
 mc_add_fru_data 0x30 19 64 file 0 "/run/emu_param/product_name"
-mc_add_fru_data 0x30 20 700 file 0 "/run/emu_param/dmidecode_info"
+mc_add_fru_data 0x30 20 1310 file 0 "/run/emu_param/dmidecode_info"
 mc_enable 0x30
