@@ -5,6 +5,8 @@
 # journalctl -u set_emu_param
 
 EMU_PARAM_DIR=/run/emu_param
+# mt416*_pciconf0 is the pattern for BF devices
+BF_MST_DEVICE=/dev/mst/mt416*_pciconf0
 
 if [ ! -d $EMU_PARAM_DIR ]; then
 	mkdir $EMU_PARAM_DIR
@@ -568,7 +570,7 @@ fi
 if [ ! -d /dev/mst ]; then
 	mst start
 fi
-temp=$(mget_temp -d /dev/mst/mt*_pciconf0)
+temp=$(mget_temp -d $BF_MST_DEVICE)
 
 if [ -z "$temp" ]; then
 	remove_sensor "bluefield_temp"
@@ -795,7 +797,7 @@ get_fw_info() {
 	# Get VPD info
 	cat <<- EOF >> $EMU_PARAM_DIR/fw_info
 	vpd info:
-	$(mlxvpd -d /dev/mst/mt*_pciconf0)
+	$(mlxvpd -d $BF_MST_DEVICE)
 	EOF
 
 	if [ -d /sys/class/infiniband/mlx*_0 ]; then
@@ -890,7 +892,7 @@ if [ "$t" = "$fru_timer" ]; then
 	###################################
 	#        Get the fru info         #
 	###################################
-	flint -d /dev/mst/mt*_pciconf0 q full > $EMU_PARAM_DIR/bf_fru
+	flint -d $BF_MST_DEVICE q full > $EMU_PARAM_DIR/bf_fru
 	truncate -s 1280 $EMU_PARAM_DIR/bf_fru
 
 	###################################
@@ -978,7 +980,7 @@ if [ "$t" = "$fru_timer" ]; then
 	##########################################
 	#          Get BF UID info               #
 	##########################################
-	mlxreg -d /dev/mst/mt*_pciconf0 --reg_name MDIR --get | awk '{if(NR>2)print}' \
+	mlxreg -d $BF_MST_DEVICE --reg_name MDIR --get | awk '{if(NR>2)print}' \
 	       	| grep device | cut -d "x" -f 2 | tr -d '\n' > $EMU_PARAM_DIR/bf_uid
 	if [ ! -s $EMU_PARAM_DIR/bf_uid ]; then
 		cat <<- EOF > $EMU_PARAM_DIR/bf_uid
