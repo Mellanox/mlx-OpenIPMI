@@ -404,43 +404,34 @@ get_connectx_net_info() {
 	# Get gateway
 	ip r | grep default | grep "dev $eth" >> $EMU_PARAM_DIR/$file_name$1
 
-	# Get the connection name
-	connection_name=$(nmcli -g GENERAL.CONNECTION dev show $eth)
-
-	# Check if IPv4 address is assigned and is not a link local address
-	ifconfig $eth | grep "inet " | grep -v " 169.254."
+	# Determine IPv4 address origin
+	file=$(ip show addr dev $eth | grep "inet ")
 	if [ $? -eq 0 ]; then
-
-		# Check IPv4 connection type
-		file=$(nmcli -g ipv4.method con show "$connection_name")
-
-		if [ "$file" = "auto" ]; then
-			echo "IPv4 Address Origin: DHCP" >> $EMU_PARAM_DIR/$file_name$1
-		elif [ "$file" = "manual" ]; then
-			echo "IPv4 Address Origin: Static" >> $EMU_PARAM_DIR/$file_name$1
-		else
+		if ["scope link" == $file ]; then
 			echo "IPv4 Address Origin: LinkLocal" >> $EMU_PARAM_DIR/$file_name$1
+		elif ["scope global dynamic" == $file ]; then
+			echo "IPv4 Address Origin: DHCP" >> $EMU_PARAM_DIR/$file_name$1
+		else
+			echo "IPv4 Address Origin: Static" >> $EMU_PARAM_DIR/$file_name$1
 		fi
 	else
-		echo "IPv4 Address Origin: LinkLocal" >> $EMU_PARAM_DIR/$file_name$1
+		echo "IPv4 Address Origin: Static" >> $EMU_PARAM_DIR/$file_name$1
 	fi
 
-	# Check if IPv6 address is assigned and is not a link local address
-	ifconfig $eth | grep "inet6 " | grep -v " fe80::"
+	# Determine IPv6 address origin
+	file=$(ip show addr dev $eth | grep "inet6")
 	if [ $? -eq 0 ]; then
-
-		# Check IPv6 connection type
-		file=$(nmcli -g ipv6.method con show "$connection_name")
-
-		if [ "$file" = "auto" ]; then
-			echo "IPv6 Address Origin: DHCP" >> $EMU_PARAM_DIR/$file_name$1
-		elif [ "$file" = "manual" ]; then
-			echo "IPv6 Address Origin: Static" >> $EMU_PARAM_DIR/$file_name$1
-		else
+		if ["scope link" == $file ]; then
 			echo "IPv6 Address Origin: LinkLocal" >> $EMU_PARAM_DIR/$file_name$1
+		elif ["autoconf" == $file ]; then
+			echo "IPv6 Address Origin: AutoConf" >> $EMU_PARAM_DIR/$file_name$1
+		elif ["scope global dynamic" == $file ]; then
+			echo "IPv6 Address Origin: DHCP" >> $EMU_PARAM_DIR/$file_name$1
+		else
+			echo "IPv6 Address Origin: Static" >> $EMU_PARAM_DIR/$file_name$1
 		fi
 	else
-		echo "IPv6 Address Origin: LinkLocal" >> $EMU_PARAM_DIR/$file_name$1
+		echo "IPv6 Address Origin: Static" >> $EMU_PARAM_DIR/$file_name$1
 	fi
 
 	data="prio|rx_symbol_err_phy|rx_pcs_symbol_err_phy|rx_crc_errors_phy"
