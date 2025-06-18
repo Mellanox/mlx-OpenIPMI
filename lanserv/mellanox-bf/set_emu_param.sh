@@ -687,25 +687,13 @@ if temp=$(cat "$RTC_VOLTAGE_PATH" 2>/dev/null); then
     # can have non-integer values in that resolution.
     # Since the SDR sensor configuration is based on raw integer values, we set
     # the input to be 10 times the real value in volts we want displayed.
-    case "$temp" in
-        0x0)
-            # A value of 0x0 means RTC battery voltage has an acceptable value
-            # of about 3 Volts. We set the sensor value to 30 (10 times 3).
-            echo "30" > "$EMU_PARAM_DIR/rtc_voltage"
-            ;;
-        0x80)
-            # A value of 0x80 means RTC battery voltage is low at about 2 Volts.
-            # We set the sensor value to 20 (10 times 2).
-            echo "20" > "$EMU_PARAM_DIR/rtc_voltage"
-            ;;
-        *)
-            # If the value is not 0x0 or 0x80, it is considered an error code.
-            # We print it and remove the sensor file so it appears as if there
-            # is no sensor reading.
-            echo "RTC battery low voltage returned error code $temp"
-            remove_sensor "rtc_voltage"
-            ;;
-    esac
+
+    # Due to unstable RTC voltage readings from hardware that may incorrectly
+    # report low voltage levels despite a fully charged battery, we are implementing
+    # a workaround in the current version. This workaround will return consistent
+    # good voltage values to prevent false positive battery voltage readings and
+    # avoid unnecessary battery replacement alerts.
+    echo "30" > "$EMU_PARAM_DIR/rtc_voltage"
 else
     # Unable to read RTC battery low voltage. It is possible this is because
     # the RTC battery driver was not loaded, so the sensor file cannot be found.
