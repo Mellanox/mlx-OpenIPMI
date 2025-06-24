@@ -25,10 +25,7 @@ oob_ip=$3
 external_ddr=$4
 loop_period=$5
 bf_version=$6
-#Fru_type
-# 0 = Defualt FRU type. 
-# 1 = In this FRU the part number will be under extra and the version will be under part number.
-fru_type=$7
+source_service=$7
 
 # This timer is used to update the FRUs
 # once every hour. It also informs the user
@@ -1014,4 +1011,23 @@ if  [ -n "$product_name" ]; then
 	done
 
 	truncate -s 1310 $EMU_PARAM_DIR/dmidecode_info
+fi
+
+# The NO_IPMB_SUPPORT_FLAG is created if no IPMB support is needed when starting the ipmid daemon.
+NO_IPMB_SUPPORT_FLAG=/run/emu_param/no_ipmb_support
+
+# Keep this part at the end of the script to ensure that the
+# mlx_ipmid service is restarted after set_emu_param is called.
+if [ "$i2cbus_slave" != "NONE" ]; then
+	if [ "$source_service" = "set_emu_param" ] && [ -f $NO_IPMB_SUPPORT_FLAG ]; then
+		rm -f $NO_IPMB_SUPPORT_FLAG
+		if ! grep -q "ipmb-$i2cbus_slave" /etc/ipmi/mlx-bf.lan.conf; then
+			echo "  ipmb 2 ipmb_dev_int /dev/ipmb-$i2cbus_slave" >> /etc/ipmi/mlx-bf.lan.conf
+		fi
+		systemctl restart mlx_ipmid
+	fi
+else
+	if [ "$source_service" = "mlx_ipmid" ]; then
+		touch $NO_IPMB_SUPPORT_FLAG
+	fi
 fi
