@@ -738,43 +738,98 @@ fi
 ###################################
 #       Get SOC power info        #
 ###################################
-SOC_POWER_PATH="/sys/kernel/debug/mlxbf-ptm/monitors/status/total_power"
-if [ ! -f "$SOC_POWER_PATH" ]; then
-    echo "Error: soc_power file not found try to load the driver with: modprobe mlxbf-ptm"
-    remove_sensor "soc_power"
-else
-    soc_power=$(cat "$SOC_POWER_PATH")
-    #check of soc_power is decimal number.
-    if ! [[ "$soc_power" =~ ^([0-9]+(\.[0-9]+)?|0)$ ]]; then
-        echo "Error: soc_power is not a valid number"
-        remove_sensor "soc_power"
-    else
-        # Remove all the number after the decimal point – it can cause issues in the ipmb
-        soc_power=$((${soc_power%.*}))
-        # echo the soc_power value in to /run/emu_param/soc_power
-        echo "$soc_power" > "${EMU_PARAM_DIR}/soc_power"
+
+# First try to get SOC power via MVCR command
+soc_power=""
+# Check if mlxreg command is available
+if command -v mlxreg >/dev/null 2>&1; then
+    # Try to get total power value from MVCR register
+    mvcr_output=$(mlxreg -d $BF_MST_DEVICE --reg_name "MVCR" --indexes "sensor_index=127" --get -y 2>/dev/null)
+    if [ $? -eq 0 ] && [ -n "$mvcr_output" ]; then
+        # Extract power_sensor_value from the output
+        power_value=$(echo "$mvcr_output" | grep "power_sensor_value" | awk '{print $3}' | sed 's/0x//')
+        if [ -n "$power_value" ]; then
+            # Convert hex to decimal
+            soc_power=$(printf "%d" "0x$power_value")
+            # The PRM value is given in 0.1W units and is guaranteed to be a multiple of the ATF mailbox value and 10,
+            # so we can safely divide by 10 to get the SOC power in Watts without loss of precision.
+            soc_power=$((soc_power / 10))
+        fi
     fi
+fi
+
+# If MVCR method failed, fall back to DebugFS method
+if [ -z "$soc_power" ]; then
+    SOC_POWER_PATH="/sys/kernel/debug/mlxbf-ptm/monitors/status/total_power"
+    if [ ! -f "$SOC_POWER_PATH" ]; then
+        echo "Error: $SOC_POWER_PATH file not found. Try to load the driver with: modprobe mlxbf-ptm"
+    else
+        soc_power=$(cat "$SOC_POWER_PATH")
+        # Check if soc_power is a decimal number.
+        if ! [[ "$soc_power" =~ ^([0-9]+(\.[0-9]+)?|0)$ ]]; then
+            echo "Error: content of $SOC_POWER_PATH is not a valid number: $soc_power"
+            soc_power=""
+        else
+            # Remove all the digits after the decimal point – it can cause issues in the ipmb
+            soc_power=$((${soc_power%.*}))
+        fi
+    fi
+fi
+
+# Write the soc_power value if we have a valid value
+if [ -n "$soc_power" ] && [[ "$soc_power" =~ ^[0-9]+$ ]]; then
+    echo "$soc_power" > "${EMU_PARAM_DIR}/soc_power"
+else
+    echo "Error: Failed to get SOC power from MVCR register and DebugFS."
+    remove_sensor "soc_power"
 fi
 
 ###################################
 #     Get power envelope info     #
 ###################################
-POWER_ENVELOPE_PATH="/sys/kernel/debug/mlxbf-ptm/monitors/status/power_envelope"
-if [ ! -f "$POWER_ENVELOPE_PATH" ]; then
-    echo "Error: power_envelope file not found"
-    remove_sensor "power_envelope"
-else
-    power_envelope=$(cat "$POWER_ENVELOPE_PATH")
-    #check of power_envelope is decimal number.
-    if ! [[ "$power_envelope" =~ ^-?[0-9]+(\.[0-9]+)?$ ]]; then	
-        echo "Error: power_envelope is not a valid number"
-        remove_sensor "power_envelope"
-    else
-        # Remove all the number after the decimal point – it can cause issues in the ipmb
-        power_envelope=$((${power_envelope%.*}))
-        # echo the power_envelope value in to /run/emu_param/power_envelope
-        echo "$power_envelope" > "${EMU_PARAM_DIR}/power_envelope"
+# First try to get power envelope via MVCR command
+power_envelope=""
+# Check if mlxreg command is available
+if command -v mlxreg >/dev/null 2>&1; then
+    # Try to get power envelope value from MVCR register
+    mvcr_output=$(mlxreg -d $BF_MST_DEVICE --reg_name "MVCR" --indexes "sensor_index=6" --get -y 2>/dev/null)
+    if [ $? -eq 0 ] && [ -n "$mvcr_output" ]; then
+        # Extract power_sensor_value from the output
+        power_value=$(echo "$mvcr_output" | grep "power_sensor_value" | awk '{print $3}' | sed 's/0x//')
+        if [ -n "$power_value" ]; then
+            # Convert hex to decimal
+            power_envelope=$(printf "%d" "0x$power_value")
+            # The PRM value is given in 0.1W units and is guaranteed to be a multiple of the ATF mailbox value and 10,
+            # so we can safely divide by 10 to get the power envelope in Watts without loss of precision.
+            power_envelope=$((power_envelope / 10))
+        fi
     fi
+fi
+
+# If MVCR method failed, fall back to DebugFS method
+if [ -z "$power_envelope" ]; then
+    POWER_ENVELOPE_PATH="/sys/kernel/debug/mlxbf-ptm/monitors/status/power_envelope"
+    if [ ! -f "$POWER_ENVELOPE_PATH" ]; then
+        echo "Error: $POWER_ENVELOPE_PATH file not found"
+    else
+        power_envelope=$(cat "$POWER_ENVELOPE_PATH")
+        # Check if power_envelope is a decimal number.
+        if ! [[ "$power_envelope" =~ ^-?[0-9]+(\.[0-9]+)?$ ]]; then	
+            echo "Error: content of $POWER_ENVELOPE_PATH is not a valid number: $power_envelope"
+            power_envelope=""
+        else
+            # Remove all the digits after the decimal point – it can cause issues in the ipmb
+            power_envelope=$((${power_envelope%.*}))
+        fi
+    fi
+fi
+
+# Write the power_envelope value if we have a valid value
+if [ -n "$power_envelope" ] && [[ "$power_envelope" =~ ^-?[0-9]+$ ]]; then
+    echo "$power_envelope" > "${EMU_PARAM_DIR}/power_envelope"
+else
+    echo "Error: Failed to get power envelope from MVCR register and DebugFS."
+    remove_sensor "power_envelope"
 fi
 
 ###################################
