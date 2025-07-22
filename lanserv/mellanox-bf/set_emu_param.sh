@@ -182,7 +182,7 @@ if [ "$i2cbus_slave" != "NONE" ]; then
 	# load the ipmb_host driver, if installed in BF
 	is_ipmb_host_driver=false
 
-	if find /lib/modules/ /usr/lib/modules/ \( -name "ipmb_host.ko" -o -name "ipmb-host.ko" \) -print -quit | grep -q .; then
+	if modinfo ipmb_host > /dev/null 2>&1; then
 		is_ipmb_host_driver=true
 	fi
 	# The i2c bus between BMC and DPU could be overused and susceptible to be busy.
