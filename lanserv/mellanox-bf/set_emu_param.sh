@@ -19,6 +19,34 @@ if [ ! -s  $EMU_PARAM_DIR/ip_addresses ]; then
 	truncate -s 61 $EMU_PARAM_DIR/ip_addresses
 fi
 
+# Validate that all required arguments are provided
+if [ $# -ne 7 ]; then
+    echo "Error: This script requires exactly 7 arguments."
+    echo "Usage: $0 <bffamily> <support_ipmb> <oob_ip> <external_ddr> <loop_period> <bf_version> <source_service>"
+    echo ""
+    echo "Arguments:"
+    echo "  bffamily       - BlueField family (e.g., Bluewhale, BlueSphere, PRIS, Camelantis, Aztlan, Dell-Camelantis, Roy, Moonraker, Goldeneye)"
+    echo "  support_ipmb   - IPMB support flag (NONE or numeric value for i2c bus)"
+    echo "  oob_ip         - Out-of-band IP address (0 for disabled)"
+    echo "  external_ddr   - External DDR flag (YES or NO)"
+    echo "  loop_period    - Loop period in seconds (positive integer)"
+    echo "  bf_version     - BlueField version (hexadecimal value)"
+    echo "  source_service - Source service name (e.g., set_emu_param, mlx_ipmid)"
+    echo ""
+    echo "Example: $0 BlueSphere 1 192.168.1.100 NO 30 0x00000214 set_emu_param"
+    exit 1
+fi
+
+# Check that all arguments are not empty
+for i in 1 2 3 4 5 6 7; do
+    eval "arg=\$$i"
+    if [ -z "$arg" ]; then
+        echo "Error: Argument $i is empty"
+        echo "Usage: $0 <bffamily> <support_ipmb> <oob_ip> <external_ddr> <loop_period> <bf_version> <source_service>"
+        exit 1
+    fi
+done
+
 bffamily=$1
 support_ipmb=$2
 oob_ip=$3
