@@ -240,7 +240,7 @@ get_qsfp_eeprom_data() {
 # $2 is the output file name
 get_qsfp_temp() {
 	temp=$(mlxlink -d $1 -m 2> /dev/null | grep Temperature | cut -f 2 -d ":" | tr -d " ")
-	if [ "$temp" != "N/A" ]; then
+	if [ "$temp" != "N/A" ] && [ "$temp" != "0[0..0]" ]; then
 		temp=$(echo "$temp" | awk -F'[^0-9]+' '{print $1}')
 		echo $temp > $EMU_PARAM_DIR/$2
 	else
