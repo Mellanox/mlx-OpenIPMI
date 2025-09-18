@@ -42,7 +42,6 @@ BuildRoot: %{?build_root:%{build_root}}%{!?build_root:/var/tmp/OFED}
 Vendor: Mellanox Technologies
 BuildRequires: popt-devel
 BuildRequires: ncurses-devel
-Requires: rasdaemon
 Provides: OpenIPMI
 Provides: OpenIPMI-libs
 Provides: OpenIPMI-modalias
