@@ -760,30 +760,6 @@ else
 fi
 
 ###################################
-#     load mlxbf-ptm module      #
-###################################
-#Check for Linux Lockdown
-#If the system is in Linux lockdown, the file
-#"/sys/kernel/security/lockdown" will contain either:
-#"none integrity [confidentiality]"
-#"none [integrity] confidentiality" 
-
-LOCKDOWN_STATUS_PATH="/sys/kernel/security/lockdown"
-LOCKDOWN_STATUS="unlock"
-if [ -f "$LOCKDOWN_STATUS_PATH" ]; then
-    lockdown_status_string=$(cat "$LOCKDOWN_STATUS_PATH")
-    if [[ "$lockdown_status_string" == *"[integrity]"* || "$lockdown_status_string" == *"[confidentiality]"* ]]; then
-        echo "Error: Linux lockdown: system can't load mlxbf_ptm module; soc_power and power_envelope sensors unavailable."
-        LOCKDOWN_STATUS="lockdown"
-    fi
-fi
-# Check if mlxbf_ptm module is loaded
-if ! lsmod | grep -q mlxbf_ptm && [ "$LOCKDOWN_STATUS" = "unlock" ]; then
-    echo "mlxbf_ptm module not loaded, loading now."
-    modprobe mlxbf_ptm
-fi
-
-###################################
 #       Get SOC power info        #
 ###################################
 
@@ -806,29 +782,11 @@ if command -v mlxreg >/dev/null 2>&1; then
     fi
 fi
 
-# If MVCR method failed, fall back to DebugFS method
-if [ -z "$soc_power" ]; then
-    SOC_POWER_PATH="/sys/kernel/debug/mlxbf-ptm/monitors/status/total_power"
-    if [ ! -f "$SOC_POWER_PATH" ]; then
-        echo "Error: $SOC_POWER_PATH file not found. Try to load the driver with: modprobe mlxbf-ptm"
-    else
-        soc_power=$(cat "$SOC_POWER_PATH")
-        # Check if soc_power is a decimal number.
-        if ! [[ "$soc_power" =~ ^([0-9]+(\.[0-9]+)?|0)$ ]]; then
-            echo "Error: content of $SOC_POWER_PATH is not a valid number: $soc_power"
-            soc_power=""
-        else
-            # Remove all the digits after the decimal point – it can cause issues in the ipmb
-            soc_power=$((${soc_power%.*}))
-        fi
-    fi
-fi
-
 # Write the soc_power value if we have a valid value
 if [ -n "$soc_power" ] && [[ "$soc_power" =~ ^[0-9]+$ ]]; then
     echo "$soc_power" > "${EMU_PARAM_DIR}/soc_power"
 else
-    echo "Error: Failed to get SOC power from MVCR register and DebugFS."
+    echo "Error: Failed to get SOC power from MVCR register."
     remove_sensor "soc_power"
 fi
 
@@ -854,29 +812,11 @@ if command -v mlxreg >/dev/null 2>&1; then
     fi
 fi
 
-# If MVCR method failed, fall back to DebugFS method
-if [ -z "$power_envelope" ]; then
-    POWER_ENVELOPE_PATH="/sys/kernel/debug/mlxbf-ptm/monitors/status/power_envelope"
-    if [ ! -f "$POWER_ENVELOPE_PATH" ]; then
-        echo "Error: $POWER_ENVELOPE_PATH file not found"
-    else
-        power_envelope=$(cat "$POWER_ENVELOPE_PATH")
-        # Check if power_envelope is a decimal number.
-        if ! [[ "$power_envelope" =~ ^-?[0-9]+(\.[0-9]+)?$ ]]; then	
-            echo "Error: content of $POWER_ENVELOPE_PATH is not a valid number: $power_envelope"
-            power_envelope=""
-        else
-            # Remove all the digits after the decimal point – it can cause issues in the ipmb
-            power_envelope=$((${power_envelope%.*}))
-        fi
-    fi
-fi
-
 # Write the power_envelope value if we have a valid value
 if [ -n "$power_envelope" ] && [[ "$power_envelope" =~ ^-?[0-9]+$ ]]; then
     echo "$power_envelope" > "${EMU_PARAM_DIR}/power_envelope"
 else
-    echo "Error: Failed to get power envelope from MVCR register and DebugFS."
+    echo "Error: Failed to get power envelope from MVCR register."
     remove_sensor "power_envelope"
 fi
 
