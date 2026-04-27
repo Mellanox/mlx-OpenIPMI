@@ -7,6 +7,8 @@
 EMU_PARAM_DIR=/run/emu_param
 # mt416*_pciconf0 is the pattern for BF devices
 BF_MST_DEVICE=/dev/mst/mt416*_pciconf0
+ETH_PCI_CLASS=0200
+IB_PCI_CLASS=0207
 
 if [ ! -d $EMU_PARAM_DIR ]; then
 	mkdir $EMU_PARAM_DIR
@@ -284,9 +286,30 @@ get_qsfp_temp() {
 get_qsfp_status()
 {
 	bdf=$1
-	# Parse link status from mlxlink
-	link_status=$(mlxlink -d "$bdf" --cable --ddm | awk -F ":" '/State/{print $2}')
-	# If check if the port is disabled is true
+	local mlxlink_output=""
+	local link_status=""
+	local retries=3
+	# Retry up to 3 times to get the link status
+	# Sleep for 1 second between retries
+	# If the link status is not found, we return 2 in switch-case
+	while [ $retries -gt 0 ]; do
+		mlxlink_output=$(mlxlink -d "$bdf" 2>/dev/null)
+		local rc=$?
+		# Get the link state from mlxlink output, remove the whitespace
+		link_status=$(echo "$mlxlink_output" | awk -F ":" '/^State/{print $2}' | tr -d ' ')
+		if [ $rc -eq 0 ] && [ -n "$link_status" ]; then
+			break
+		fi
+		retries=$((retries - 1))
+		if [ $retries -gt 0 ]; then
+			sleep 1
+		fi
+	done
+
+	if [ $retries -eq 0 ]; then
+		echo "WARNING: Failed to get link status for BDF $bdf"
+	fi
+
 	if [ $2 ]; then
 		# Check if the port is disabled
 		case "$link_status" in 
@@ -295,8 +318,7 @@ get_qsfp_status()
         	;;
 		esac
 	fi
-	# Update port link status
-	case "$link_status" in 
+	case "$link_status" in
 		*Active*)
 		return 1
 		;;
@@ -333,6 +355,14 @@ update_cables_info()
 			fi
 		done < $1
 	fi
+}
+
+# Extract the Ethernet and Infiniband BDFs from the lspci output
+# and save them to the eth_bdfs.txt and ib_bdfs.txt files
+extract_nic_pci_devices()
+{
+	lspci -n | grep $ETH_PCI_CLASS | cut -f 1 -d " " > $EMU_PARAM_DIR/eth_bdfs.txt
+	lspci -n | grep $IB_PCI_CLASS | cut -f 1 -d " " > $EMU_PARAM_DIR/ib_bdfs.txt
 }
 
 # Getting Link Interface data using nmcli command.
@@ -622,8 +652,13 @@ fi
 # If a port is not connected or if its temperature is reported as
 # "N/A" by FW, then the ipmitool command will display "no reading".
 
-lspci -n | grep 0200 | cut -f 1 -d " " > $EMU_PARAM_DIR/eth_bdfs.txt
-lspci -n | grep 0207 | cut -f 1 -d " " > $EMU_PARAM_DIR/ib_bdfs.txt
+extract_nic_pci_devices
+
+if [ ! -s $EMU_PARAM_DIR/eth_bdfs.txt ] && [ ! -s $EMU_PARAM_DIR/ib_bdfs.txt ]; then
+	# Rescan PCI devices if NICs was not enumerated
+	echo 1 > /sys/bus/pci/rescan 2>/dev/null
+	extract_nic_pci_devices
+fi
 
 if [ ! -s $EMU_PARAM_DIR/eth_bdfs.txt ] && [ ! -s $EMU_PARAM_DIR/ib_bdfs.txt ]; then
 	# No connection to the QSFPs so links are considered down
@@ -888,9 +923,9 @@ get_bdf_file() {
 if [ $(( $curr_time % 60 )) -eq 0 ]; then
 # eth_and_ib will be true if board has a Eth configured port and a IB configured port
 	eth_and_ib=false
-	if lspci -n | grep 0200 | cut -f 1 -d " " | grep -q .
+	if lspci -n | grep $ETH_PCI_CLASS | cut -f 1 -d " " | grep -q .
 	then
-		if lspci -n | grep 0207 | cut -f 1 -d " " | grep -q .
+		if lspci -n | grep $IB_PCI_CLASS | cut -f 1 -d " " | grep -q .
 		then
 			eth_and_ib=true
 		fi
