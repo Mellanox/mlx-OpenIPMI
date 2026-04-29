@@ -55,6 +55,8 @@ loop_period=$5
 bf_version=$6
 source_service=$7
 
+echo "set_emu_param debug: $(date -Is) pid=$$ bffamily=${bffamily} source_service=${source_service}" >&2
+
 # This timer is used to update the FRUs
 # once every hour. It also informs the user
 # how much time is left before the next FRU
