@@ -293,7 +293,7 @@ get_qsfp_eeprom_data() {
 	| tr -d "\n"  | perl -lpe '$_=pack"H*",$_' >  $EMU_PARAM_DIR/tmp
 
 	# Make sure binary data packed is 256 bytes
-	dd if=$EMU_PARAM_DIR/tmp of=$EMU_PARAM_DIR/$2 bs=1 skip=0 count=256
+	dd if=$EMU_PARAM_DIR/tmp of=$EMU_PARAM_DIR/$2 bs=1 skip=0 count=256 2>/dev/null
 
 	rm $EMU_PARAM_DIR/tmp
 }
@@ -495,8 +495,7 @@ get_connectx_net_info() {
 	connection_name=$(nmcli -g GENERAL.CONNECTION dev show $eth)
 
 	# Check if IPv4 address is assigned and is not a link local address
-	ifconfig $eth | grep "inet " | grep -v " 169.254."
-	if [ $? -eq 0 ]; then
+	if ifconfig $eth | grep "inet " | grep -v " 169.254." > /dev/null; then
 
 		# Check IPv4 connection type
 		file=$(nmcli -g ipv4.method con show "$connection_name")
@@ -513,8 +512,7 @@ get_connectx_net_info() {
 	fi
 
 	# Check if IPv6 address is assigned and is not a link local address
-	ifconfig $eth | grep "inet6 " | grep -v " fe80::"
-	if [ $? -eq 0 ]; then
+	if ifconfig $eth | grep "inet6 " | grep -v " fe80::" > /dev/null; then
 
 		# Check IPv6 connection type
 		file=$(nmcli -g ipv6.method con show "$connection_name")
@@ -1026,7 +1024,7 @@ if [ "$t" = "$fru_timer" ]; then
 		CID=`printf '00 %.0s' $(seq 1 16)`
 	fi
 	echo $CID |tr -d ' ' | tr -d '\n' | perl -lpe '$_=pack"H*",$_' > $EMU_PARAM_DIR/temp
-	dd if=$EMU_PARAM_DIR/temp of=$EMU_PARAM_DIR/emmc_cid bs=1 skip=0 count=16
+	dd if=$EMU_PARAM_DIR/temp of=$EMU_PARAM_DIR/emmc_cid bs=1 skip=0 count=16 2>/dev/null
 
 	# CSD binary data
 	CSD=`find /sys/devices -name 'csd'| grep mmc| xargs cat| sed 's/.\{2\}/& /g'`
@@ -1034,7 +1032,7 @@ if [ "$t" = "$fru_timer" ]; then
 		CSD=`printf '00 %.0s' $(seq 1 16)`
 	fi
 	echo $CSD |tr -d ' ' | tr -d '\n' | perl -lpe '$_=pack"H*",$_' > $EMU_PARAM_DIR/temp
-	dd if=$EMU_PARAM_DIR/temp of=$EMU_PARAM_DIR/emmc_csd bs=1 skip=0 count=16
+	dd if=$EMU_PARAM_DIR/temp of=$EMU_PARAM_DIR/emmc_csd bs=1 skip=0 count=16 2>/dev/null
 
 	# Ext CSD binary data
 	EXTCSD=`cat '/sys/kernel/debug/mmc0/mmc0:0001/ext_csd' | sed 's/.\{2\}/& /g'`
@@ -1042,7 +1040,7 @@ if [ "$t" = "$fru_timer" ]; then
 		EXTCSD=`printf 'ff %.0s' $(seq 1 16)`
 	fi
 	echo $EXTCSD |tr -d ' ' | tr -d '\n' | perl -lpe '$_=pack"H*",$_' > $EMU_PARAM_DIR/temp
-	dd if=$EMU_PARAM_DIR/temp of=$EMU_PARAM_DIR/emmc_extcsd bs=1 skip=0 count=512
+	dd if=$EMU_PARAM_DIR/temp of=$EMU_PARAM_DIR/emmc_extcsd bs=1 skip=0 count=512 2>/dev/null
 
 	rm $EMU_PARAM_DIR/temp
 
