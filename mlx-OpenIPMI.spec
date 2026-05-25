@@ -102,10 +102,6 @@ rm -f %{buildroot}/usr/lib64/OpenIPMI/*.la %{buildroot}/usr/lib64/OpenIPMI/*.a
 /var/ipmi_sim/mellanox/sdr.30.main
 /lib/systemd/system/set_emu_param.service
 /lib/systemd/system/mlx_ipmid.service
-/etc/logrotate.d/mlx_ipmid
-/etc/logrotate.d/set_emu_param
-/etc/rsyslog.d/mlx_ipmid.conf
-/etc/rsyslog.d/set_emu_param.conf
 /usr/lib64/OpenIPMI/*.so*
 
 %changelog
