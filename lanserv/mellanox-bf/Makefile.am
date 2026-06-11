@@ -14,7 +14,7 @@ mlx-bf.lan.conf: $(srcdir)/mlx-bf.lan.conf.in
 	sed "s|@pkglib@|$(pkglibdir)|g" $(srcdir)/mlx-bf.lan.conf.in > $(srcdir)/mlx-bf.lan.conf
 
 install-data-local:
-	$(INSTALL) -m 755 -d "$(DESTDIR)$(localstatedir)/ipmi_sim/mellanox/"; \
+	$(INSTALL) -m 755 -d "$(DESTDIR)$(datadir)/ipmi_sim/mellanox/"; \
 	$(INSTALL) -m 755 -d "$(DESTDIR)$(sysconfdir)/ipmi/"; \
 	$(INSTALL) -m 755 -d "$(DESTDIR)/lib/systemd/system/"; \
 	$(INSTALL) -m 755 $(srcdir)/set_emu_param.sh "$(DESTDIR)$(bindir)/"; \
@@ -22,7 +22,7 @@ install-data-local:
 	$(INSTALL) -m 755 $(srcdir)/mlx_ipmid_init.sh "$(DESTDIR)$(bindir)/"; \
 	$(INSTALL) -m 755 $(srcdir)/mlx_emu_init.sh "$(DESTDIR)$(bindir)/"; \
 	$(INSTALL) -m 644 $(srcdir)/set_emu_param.service "$(DESTDIR)/lib/systemd/system/"; \
-	$(INSTALL) -m 644 $(srcdir)/sdr.30.main "$(DESTDIR)$(localstatedir)/ipmi_sim/mellanox/"; \
+	$(INSTALL) -m 644 $(srcdir)/sdr.30.main "$(DESTDIR)$(datadir)/ipmi_sim/mellanox/"; \
 	$(INSTALL) -m 644 $(srcdir)/mlx-bf.lan.conf "$(DESTDIR)$(sysconfdir)/ipmi/"; \
 	$(INSTALL) -m 644 $(srcdir)/mlx-bf-base.emu "$(DESTDIR)$(sysconfdir)/ipmi/"; \
 	$(INSTALL) -m 644 $(srcdir)/mlx-bf1.emu "$(DESTDIR)$(sysconfdir)/ipmi/"; \
@@ -39,7 +39,7 @@ uninstall-local:
 	-rm -f "$(DESTDIR)$(bindir)/poll_set_emu_param.sh"
 	-rm -f "$(DESTDIR)$(bindir)/mlx_ipmid_init.sh"
 	-rm -f "$(DESTDIR)$(bindir)/mlx_emu_init.sh"
-	-rm -f "$(DESTDIR)$(localstatedir)/ipmi_sim/mellanox/sdr.30.main"
+	-rm -f "$(DESTDIR)$(datadir)/ipmi_sim/mellanox/sdr.30.main"
 	-rm -f "$(DESTDIR)$(sysconfdir)/ipmi/mlx-bf.lan.conf"
 	-rm -f "$(DESTDIR)$(sysconfdir)/ipmi/mlx-bf-base.emu"
 	-rm -f "$(DESTDIR)$(sysconfdir)/ipmi/mlx-bf1.emu"
@@ -48,6 +48,6 @@ uninstall-local:
 	-rm -f "$(DESTDIR)$(sysconfdir)/ipmi/progconf"
 	-rm -f "$(DESTDIR)/lib/systemd/system/mlx_ipmid.service"
 	-rmdir "$(DESTDIR)$(sysconfdir)/ipmi" 2>/dev/null
-	-rmdir "$(DESTDIR)$(localstatedir)/ipmi_sim/mellanox" 2>/dev/null
+	-rmdir "$(DESTDIR)$(datadir)/ipmi_sim/mellanox" 2>/dev/null
 	-rmdir "$(DESTDIR)/lib/systemd/system" 2>/dev/null
 
