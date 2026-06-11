@@ -1,5 +1,5 @@
 usr/bin
 lib/systemd/system
 etc/ipmi
-var/ipmi_sim/mellanox
+usr/share/ipmi_sim/mellanox
 etc/default

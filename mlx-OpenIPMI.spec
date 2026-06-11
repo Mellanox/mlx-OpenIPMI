@@ -99,7 +99,7 @@ rm -f %{buildroot}/usr/lib64/OpenIPMI/*.la %{buildroot}/usr/lib64/OpenIPMI/*.a
 /usr/lib64/libIPMI*
 /usr/lib64/pkgconfig/OpenIPMI*
 /etc/ipmi/*
-/var/ipmi_sim/mellanox/sdr.30.main
+/usr/share/ipmi_sim/mellanox/sdr.30.main
 /lib/systemd/system/set_emu_param.service
 /lib/systemd/system/mlx_ipmid.service
 /usr/lib64/OpenIPMI/*.so*
