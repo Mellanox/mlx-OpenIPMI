@@ -793,6 +793,23 @@ else
 fi
 
 ###################################
+#          Get RTC Time           #
+###################################
+
+# Periodically read RTC time to trigger automatic FW repair of invalid dates.
+hwclock_period=$((30 * loop_period))
+if [ "$curr_time" -ne 0 ] &&
+   [ $((curr_time % hwclock_period)) -eq 0 ]; then
+    if command -v hwclock >/dev/null 2>&1; then
+        if command -v timeout >/dev/null 2>&1; then
+            timeout 5 hwclock --show >/dev/null 2>&1
+        else
+            hwclock --show >/dev/null 2>&1
+        fi
+    fi
+fi
+
+###################################
 #       Get SOC power info        #
 ###################################
 
