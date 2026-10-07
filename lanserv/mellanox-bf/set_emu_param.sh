@@ -864,9 +864,16 @@ fi
 # (RDMA), with ethernet as the link layer instead of IB.
 #
 get_fw_info() {
+	local ofed_ver
+	if ofed_ver=$(ofed_info -s 2>/dev/null); then
+		ofed_ver=$(echo "$ofed_ver" | sed 's/.$//')
+	else
+		ofed_ver="N/A"
+	fi
+
 	cat <<- EOF > $EMU_PARAM_DIR/fw_info
 	$(/usr/bin/bfver | sed '1d')
-	BlueField OFED Version: $(ofed_info -s | sed 's/.$//')
+	BlueField OFED Version: $ofed_ver
 	EOF
 
 	# Get VPD info
