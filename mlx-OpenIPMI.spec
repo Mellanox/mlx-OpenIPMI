@@ -42,6 +42,7 @@ BuildRoot: %{?build_root:%{build_root}}%{!?build_root:/var/tmp/OFED}
 Vendor: Mellanox Technologies
 BuildRequires: popt-devel
 BuildRequires: ncurses-devel
+BuildRequires: openssl-devel
 Provides: OpenIPMI
 Provides: OpenIPMI-libs
 Provides: OpenIPMI-modalias
@@ -59,7 +60,7 @@ and FRUs as well as the IPMB protocol.
 
 %build
 autoreconf -fi
-%configure --with-mellanox-bf
+%configure --with-mellanox-bf --with-openssl=yes
 sed -i 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g' libtool
 sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
 make %{?_smp_mflags}
