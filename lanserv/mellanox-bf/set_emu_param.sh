@@ -864,7 +864,9 @@ fi
 get_fw_info() {
 	cat <<- EOF > $EMU_PARAM_DIR/fw_info
 	$(/usr/bin/bfver | sed '1d')
-	BlueField OFED Version: $(ofed_info -s | sed 's/.$//')
+	# OFED is no longer delivered as a package
+	# therefore, version information is no longer available
+	BlueField OFED Version: NA
 	EOF
 
 	# Get VPD info
