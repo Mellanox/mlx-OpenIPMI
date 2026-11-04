@@ -9,6 +9,8 @@ EMU_PARAM_DIR=/run/emu_param
 BF_MST_DEVICE=/dev/mst/mt416*_pciconf0
 ETH_PCI_CLASS=0200
 IB_PCI_CLASS=0207
+# Mellanox/NVIDIA ConnectX PCI vendor ID
+MLX_PCI_VENDOR=15b3
 
 if [ ! -d $EMU_PARAM_DIR ]; then
 	mkdir $EMU_PARAM_DIR
@@ -358,11 +360,13 @@ update_cables_info()
 }
 
 # Extract the Ethernet and Infiniband BDFs from the lspci output
-# and save them to the eth_bdfs.txt and ib_bdfs.txt files
+# and save them to the eth_bdfs.txt and ib_bdfs.txt files.
+# Only MLX_PCI_VENDOR. The PCI function number is the port index,
+# so another vendor's function 0 would overwrite p0_link.
 extract_nic_pci_devices()
 {
-	lspci -n | grep $ETH_PCI_CLASS | cut -f 1 -d " " > $EMU_PARAM_DIR/eth_bdfs.txt
-	lspci -n | grep $IB_PCI_CLASS | cut -f 1 -d " " > $EMU_PARAM_DIR/ib_bdfs.txt
+	lspci -n -d ${MLX_PCI_VENDOR}: | grep $ETH_PCI_CLASS | cut -f 1 -d " " > $EMU_PARAM_DIR/eth_bdfs.txt
+	lspci -n -d ${MLX_PCI_VENDOR}: | grep $IB_PCI_CLASS | cut -f 1 -d " " > $EMU_PARAM_DIR/ib_bdfs.txt
 }
 
 # Getting Link Interface data using nmcli command.
@@ -645,10 +649,11 @@ fi
 # To get the NIC VID, SVID, DID and SDID, we use the pci dev
 # info (lspci). The pci bus number is set by the OS and is
 # likely to change if someone adds a card in the pci slot.
-# So we use the pci device class number to determine the bdf
-# for the NIC pci. The NIC card can be associated with device
-# class 0200 if it is connected via pcie or class 0207 if it
-# is connected via infiniband.
+# So we select MLX_PCI_VENDOR and then the pci device class.
+# The ConnectX port is class 0200 when its link layer is Ethernet
+# and class 0207 when it is InfiniBand.
+# Other vendors can also expose class 0200; those devices must
+# not be treated as QSFP ports.
 # If a port is not connected or if its temperature is reported as
 # "N/A" by FW, then the ipmitool command will display "no reading".
 
