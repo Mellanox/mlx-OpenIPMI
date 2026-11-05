@@ -5,6 +5,8 @@
 # journalctl -u set_emu_param
 
 EMU_PARAM_DIR=/run/emu_param
+# Mellanox/NVIDIA ConnectX PCI vendor ID
+MLX_PCI_VENDOR=15b3
 
 if [ ! -d $EMU_PARAM_DIR ]; then
 	mkdir $EMU_PARAM_DIR
@@ -417,12 +419,14 @@ fi
 # To get the NIC VID, SVID, DID and SDID, we use the pci dev
 # info (lspci). The pci bus number is set by the OS and is
 # likely to change if someone adds a card in the pci slot.
-# So we use the pci device class number to determine the bdf
-# for the NIC pci. The NIC card can be associated with device
-# class 0200 if it is connected via pcie or class 0207 if it
-# is connected via infiniband.
-lspci -n | grep 0200 | cut -f 1 -d " " > $EMU_PARAM_DIR/eth_bdfs.txt
-lspci -n | grep 0207 | cut -f 1 -d " " > $EMU_PARAM_DIR/ib_bdfs.txt
+# So we select MLX_PCI_VENDOR and then the pci device class.
+# The ConnectX port is class 0200 when its link layer is Ethernet
+# and class 0207 when it is InfiniBand.
+# Other vendors can also expose class 0200; those devices must
+# not be treated as QSFP ports. The PCI function number is the
+# port index, so another vendor's function 0 would overwrite p0_link.
+lspci -n -d ${MLX_PCI_VENDOR}: | grep 0200 | cut -f 1 -d " " > $EMU_PARAM_DIR/eth_bdfs.txt
+lspci -n -d ${MLX_PCI_VENDOR}: | grep 0207 | cut -f 1 -d " " > $EMU_PARAM_DIR/ib_bdfs.txt
 
 if [ ! -s $EMU_PARAM_DIR/eth_bdfs.txt ] && [ ! -s $EMU_PARAM_DIR/ib_bdfs.txt ]; then
 	# No connection to the QSFPs so links are considered down
