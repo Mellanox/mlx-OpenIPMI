@@ -397,6 +397,28 @@ extract_nic_pci_devices()
 	lspci -n -d ${MLX_PCI_VENDOR}: | grep $IB_PCI_CLASS | cut -f 1 -d " " > $EMU_PARAM_DIR/ib_bdfs.txt
 }
 
+# Print DHCP, Static, or LinkLocal. $1 is the interface name, $2 is 4 or 6.
+# One result is reported for the whole address family.
+addr_origin() {
+	origin_eth=$1
+	# 169.254/16 and fe80::/10 are link-local.
+	if [ "$2" = 4 ]; then
+		origin_addrs=$(ip -4 -o addr show dev "$origin_eth" 2>/dev/null | grep ' inet ' | grep -v ' 169\.254\.')
+	else
+		origin_addrs=$(ip -6 -o addr show dev "$origin_eth" 2>/dev/null | grep ' inet6 ' | grep -v ' fe80::')
+	fi
+	# No global address left. The only addresses, if any, are link-local.
+	if [ -z "$origin_addrs" ]; then
+		echo LinkLocal
+	# NetworkManager and systemd-networkd DHCP addresses omit the permanent
+	# flag, so ip prints "dynamic".
+	elif printf '%s\n' "$origin_addrs" | grep -q ' dynamic'; then
+		echo DHCP
+	else
+		echo Static
+	fi
+}
+
 # Getting Link Interface data using nmcli command.
 get_port_data() {
     port_name="$1"
@@ -495,42 +517,8 @@ get_connectx_net_info() {
 	# Get gateway
 	ip r | grep default | grep "dev $eth" >> $EMU_PARAM_DIR/$file_name$1
 
-	# Get the connection name
-	connection_name=$(nmcli -g GENERAL.CONNECTION dev show $eth)
-
-	# Check if IPv4 address is assigned and is not a link local address
-	if ifconfig $eth | grep "inet " | grep -v " 169.254." > /dev/null; then
-
-		# Check IPv4 connection type
-		file=$(nmcli -g ipv4.method con show "$connection_name")
-
-		if [ "$file" = "auto" ]; then
-			echo "IPv4 Address Origin: DHCP" >> $EMU_PARAM_DIR/$file_name$1
-		elif [ "$file" = "manual" ]; then
-			echo "IPv4 Address Origin: Static" >> $EMU_PARAM_DIR/$file_name$1
-		else
-			echo "IPv4 Address Origin: LinkLocal" >> $EMU_PARAM_DIR/$file_name$1
-		fi
-	else
-		echo "IPv4 Address Origin: LinkLocal" >> $EMU_PARAM_DIR/$file_name$1
-	fi
-
-	# Check if IPv6 address is assigned and is not a link local address
-	if ifconfig $eth | grep "inet6 " | grep -v " fe80::" > /dev/null; then
-
-		# Check IPv6 connection type
-		file=$(nmcli -g ipv6.method con show "$connection_name")
-
-		if [ "$file" = "auto" ]; then
-			echo "IPv6 Address Origin: DHCP" >> $EMU_PARAM_DIR/$file_name$1
-		elif [ "$file" = "manual" ]; then
-			echo "IPv6 Address Origin: Static" >> $EMU_PARAM_DIR/$file_name$1
-		else
-			echo "IPv6 Address Origin: LinkLocal" >> $EMU_PARAM_DIR/$file_name$1
-		fi
-	else
-		echo "IPv6 Address Origin: LinkLocal" >> $EMU_PARAM_DIR/$file_name$1
-	fi
+	echo "IPv4 Address Origin: $(addr_origin "$eth" 4)" >> $EMU_PARAM_DIR/$file_name$1
+	echo "IPv6 Address Origin: $(addr_origin "$eth" 6)" >> $EMU_PARAM_DIR/$file_name$1
 
 	data="prio|rx_symbol_err_phy|rx_pcs_symbol_err_phy|rx_crc_errors_phy"
 	data+="|rx_corrected_bits_phy|[rt]x_pause_ctrl"
